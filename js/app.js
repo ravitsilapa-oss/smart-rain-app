@@ -367,10 +367,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             alertBox.classList.add('d-none');
         }
 
-        let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปดี `;
-        if (risk.score > 60) aiMsg += `⚠️ แนะนำพกร่ม/ชุดกันฝน เฝ้าระวังการจราจรติดขัด `;
-        if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 ค่า PM2.5 สูงเกินเกณฑ์ ควรสวมหน้ากากอนามัยเมื่อออกนอกบ้าน`;
-        if (data.current.visibility < 3000) aiMsg += ` 🚗 วิสัยทัศน์การมองเห็นต่ำ ควรเปิดไฟหน้าขับขี่ด้วยความระมัดระวัง`;
+        // AI Travel Advice (Traffic + Rain Warning)
+        let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปปกติ `;
+        if (risk.score > 60 || data.current.precipitation > 2) {
+            aiMsg += `⚠️ กำลังมีฝนตกหนักในพื้นที่ เสี่ยงรถติดและน้ำท่วมขัง ควรหลีกเลี่ยงถนนสายหลักและใช้เส้นทางเลี่ยงเมือง `;
+        }
+        if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 ค่า PM2.5 สูง ควรสวมหน้ากากอนามัย `;
+        if (data.current.visibility < 3000) aiMsg += ` 🚗 ทัศนวิสัยต่ำเนื่องจากฝน/หมอก เปิดไฟหน้ารถด้วยความระมัดระวัง`;
+        
         document.getElementById('aiAnalysisResult').innerText = aiMsg;
 
         renderChart(data);
@@ -429,6 +433,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     refreshAllData();
     RadarService.loadRadarFrames().then(ts => {
-        if(ts.length > 0) document.getElementById('radarTimeline').max = ts.length - 1;
+        if(ts.length > 0) document.getElementById('radarTimeline'].max = ts.length - 1;
     });
 });
