@@ -17,13 +17,16 @@
 <body class="bg-light">
 
     <div class="container-fluid px-3 py-2 max-w-mobile">
-        <!-- Header -->
+        <!-- Header & Theme Switcher -->
         <header class="my-2 d-flex justify-content-between align-items-center">
             <div>
                 <h4 class="fw-bold text-primary mb-1">🌧️ ตรวจฝน น้ำท่วม & PM2.5</h4>
                 <p class="text-muted small mb-0">ระบบเตือนภัยสภาพอากาศและคุณภาพอากาศแบบเรียลไทม์</p>
             </div>
-            <button id="btnInstallPWA" class="btn btn-sm btn-outline-primary fw-bold d-none">📲 ติดตั้งแอป</button>
+            <div class="d-flex gap-1">
+                <button id="btnToggleDark" class="btn btn-sm btn-outline-dark">🌙</button>
+                <button id="btnInstallPWA" class="btn btn-sm btn-outline-primary fw-bold d-none">📲 ติดตั้งแอป</button>
+            </div>
         </header>
 
         <!-- Search Box -->
@@ -123,8 +126,8 @@
             </div>
             <div class="col-4 col-md-4 mt-2">
                 <div class="card p-2 text-center border-0 shadow-sm">
-                    <span class="small text-muted">ดัชนี UV</span>
-                    <div class="fw-bold text-warning" id="valUV">--</div>
+                    <span class="small text-muted">วิสัยทัศน์ขับขี่</span>
+                    <div class="fw-bold text-primary" id="valVisibility">-- กม.</div>
                 </div>
             </div>
             <div class="col-4 col-md-4 mt-2">
@@ -135,18 +138,23 @@
             </div>
         </div>
 
-        <!-- CCTV & Water Level Direct Tools -->
+        <!-- CCTV & Emergency SOS Tools -->
         <div class="card shadow-sm p-2 mb-3 border-0 bg-white">
-            <div class="fw-bold text-dark mb-2 small">📹 ตรวจเช็กพื้นที่จริงสดๆ (ฟรี 100%)</div>
+            <div class="fw-bold text-dark mb-2 small">🛠️ เครื่องมือฉุกเฉิน & ตรวจพื้นที่สด</div>
             <div class="row g-2">
                 <div class="col-6">
                     <a id="btnCCTV" href="https://traffic.longdo.com/" target="_blank" class="btn btn-outline-dark btn-sm w-100">
-                        📷 แผนที่กล้อง CCTV สด
+                        📷 กล้อง CCTV สด
                     </a>
                 </div>
                 <div class="col-6">
                     <a id="btnWaterLevel" href="https://dds.bangkok.go.th/" target="_blank" class="btn btn-outline-info btn-sm w-100">
                         🌊 ระดับน้ำ คลอง กทม.
+                    </a>
+                </div>
+                <div class="col-12 mt-1">
+                    <a href="tel:1784" class="btn btn-danger btn-sm w-100 fw-bold">
+                        📞 โทรแจ้งเหตุภัยพิบัติ/น้ำท่วม (สายด่วน 1784)
                     </a>
                 </div>
             </div>
