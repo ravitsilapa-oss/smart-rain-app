@@ -1,3 +1,10 @@
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW register failed: ', err));
+    });
+}
+
 // --- All System Services & APIs Integrated ---
 const LocationService = {
     provinces: [
@@ -230,15 +237,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.classList.toggle('text-white');
     };
 
+    // PWA Install Prompt Handler
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        const banner = document.getElementById('pwaInstallBanner');
         const btn = document.getElementById('btnInstallPWA');
+        if (banner) banner.style.display = 'block';
+        
         if (btn) {
-            btn.classList.remove('d-none');
             btn.onclick = () => {
-                btn.classList.add('d-none');
-                deferredPrompt.prompt();
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(() => {
+                        deferredPrompt = null;
+                        if (banner) banner.style.display = 'none';
+                    });
+                }
             };
         }
     });
@@ -325,7 +340,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
         document.getElementById('valWindSpeed').innerText = `${data.current.wind_speed_10m} กม./ชม.`;
         
-        // Visibility
         const visKm = data.current.visibility ? (data.current.visibility / 1000).toFixed(1) : "N/A";
         document.getElementById('valVisibility').innerText = `${visKm} กม.`;
 
