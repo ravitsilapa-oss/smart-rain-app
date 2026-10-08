@@ -1,8 +1,9 @@
-// --- All System Services Bundled ---
+// --- All System Services & APIs Integrated ---
 const LocationService = {
     provinces: [
         { name: "กรุงเทพมหานคร", region: "ภาคกลาง", lat: 13.7563, lng: 100.5018 },
         { name: "มีนบุรี", region: "กรุงเทพฯ", lat: 13.8138, lng: 100.7201 },
+        { name: "บางนา", region: "กรุงเทพฯ", lat: 13.6682, lng: 100.6140 },
         { name: "พัทลุง", region: "ภาคใต้", lat: 7.6167, lng: 100.0833 },
         { name: "สมุทรสาคร", region: "ภาคกลาง", lat: 13.5475, lng: 100.2744 },
         { name: "อุตรดิตถ์", region: "ภาคเหนือ", lat: 17.6201, lng: 100.0956 },
@@ -37,10 +38,14 @@ const LocationService = {
 const WeatherService = {
     async fetchWeather(lat, lng) {
         try {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("API Error");
-            return await res.json();
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,is_day&daily=sunrise,sunset,uv_index_max&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
+            const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,european_aqi&timezone=Asia%2FBangkok`;
+            
+            const [wRes, aqRes] = await Promise.all([fetch(weatherUrl), fetch(aqUrl)]);
+            const wData = await wRes.json();
+            const aqData = await aqRes.json();
+
+            return { ...wData, air_quality: aqData?.current || { pm2_5: 0, european_aqi: 0 } };
         } catch (e) { return null; }
     }
 };
@@ -53,7 +58,7 @@ const RadarService = {
     intervalId: null,
     initMap(id, lat, lng) {
         if (this.map) return;
-        this.map = L.map(id).setView([lat, lng], 8);
+        this.map = L.map(id).setView([lat, lng], 9);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(this.map);
     },
     async loadRadarFrames() {
@@ -101,18 +106,19 @@ const RadarService = {
 
 const RiskEngine = {
     calculateRisk(w) {
-        if (!w || !w.current) return { score: 0, level: 'ต่ำ', badgeClass: 'badge-risk-low', rainPast: 0, rainFuture: 0 };
+        if (!w || !w.current) return { score: 0, level: 'ต่ำ', badgeClass: 'bg-success', rainPast: 0, rainFuture: 0, floodRisk: false };
         const rainCurr = w.current.precipitation || 0;
         const hum = w.current.relative_humidity_2m || 0;
         const futureRain = (w.hourly?.precipitation || []).slice(2, 5).reduce((a, b) => a + b, 0);
 
-        let score = Math.round(Math.min((rainCurr * 15) + (futureRain * 10) + (hum > 80 ? 20 : hum * 0.1), 100));
-        let level = 'ต่ำ', badgeClass = 'badge-risk-low';
-        if (score > 80) { level = 'สูง'; badgeClass = 'badge-risk-high'; }
-        else if (score > 60) { level = 'ค่อนข้างสูง'; badgeClass = 'badge-risk-medhigh'; }
-        else if (score > 40) { level = 'ปานกลาง'; badgeClass = 'badge-risk-med'; }
+        let score = Math.round(Math.min((rainCurr * 15) + (futureRain * 10) + (hum > 85 ? 25 : hum * 0.1), 100));
+        let level = 'ต่ำ', badgeClass = 'bg-success';
+        if (score > 75) { level = 'สูง'; badgeClass = 'bg-danger'; }
+        else if (score > 55) { level = 'ค่อนข้างสูง'; badgeClass = 'bg-warning text-dark'; }
+        else if (score > 35) { level = 'ปานกลาง'; badgeClass = 'bg-info text-dark'; }
 
-        return { score, level, badgeClass, rainPast: rainCurr, rainFuture: futureRain };
+        const floodRisk = (rainCurr > 10 || futureRain > 25);
+        return { score, level, badgeClass, rainPast: rainCurr, rainFuture: futureRain, floodRisk };
     }
 };
 
@@ -124,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     RadarService.initMap('map', currentLat, currentLng);
     initProvinceDropdown();
 
-    // Bind Controls
+    // Controls Handling
     document.getElementById('btnFetchLocation').onclick = () => {
         currentLat = parseFloat(document.getElementById('latInput').value) || currentLat;
         currentLng = parseFloat(document.getElementById('lngInput').value) || currentLng;
@@ -134,7 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btnGPS').onclick = async () => {
         try {
-            document.getElementById('refreshStatusText').innerText = "กำลังดึงพิกัด GPS...";
+            document.getElementById('refreshStatusText').innerText = "กำลังดึง GPS...";
             const pos = await LocationService.getCurrentGPS();
             currentLat = pos.lat; currentLng = pos.lng;
             currentPlaceName = "ตำแหน่งปัจจุบัน";
@@ -174,37 +180,67 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     document.getElementById('btnShareLine').onclick = () => {
-        const msg = `🌧️ รายงานสภาพอากาศ: ${currentPlaceName}\nอุณหภูมิ: ${document.getElementById('valTemp').innerText}\nปริมาณฝน: ${document.getElementById('valRain').innerText}\nอัปเดต: ${new Date().toLocaleTimeString('th-TH')}`;
+        const temp = document.getElementById('valTemp').innerText;
+        const rain = document.getElementById('valRain').innerText;
+        const pm25 = document.getElementById('valPM25').innerText;
+        const msg = `🌧️ รายงานสภาพอากาศ & PM2.5: ${currentPlaceName}\n🌡️ อุณหภูมิ: ${temp}\n🌧️ ฝนตก: ${rain}\n😷 PM2.5: ${pm25}\n⏰ เวลา: ${new Date().toLocaleTimeString('th-TH')} น.`;
         window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     document.getElementById('btnExportCSV').onclick = () => {
         if (scannedDataStore.length === 0) return alert("กรุณากดสแกนพื้นที่ก่อน");
-        let csv = "data:text/csv;charset=utf-8,\uFEFFพื้นที่,คะแนนเสี่ยง,ระดับ,ฝนปัจจุบัน\n";
-        scannedDataStore.forEach(i => csv += `"${i.name}",${i.score},"${i.level}",${i.rainPast}\n`);
-        const a = document.createElement('a'); a.href = encodeURI(csv); a.download = 'weather_report.csv'; a.click();
+        let csv = "data:text/csv;charset=utf-8,\uFEFFพื้นที่,คะแนนเสี่ยง,ระดับ,ฝนปัจจุบัน,PM2.5\n";
+        scannedDataStore.forEach(i => csv += `"${i.name}",${i.score},"${i.level}",${i.rainPast},${i.pm25}\n`);
+        const a = document.createElement('a'); a.href = encodeURI(csv); a.download = 'weather_risk_report.csv'; a.click();
     };
 
     async function refreshAllData() {
-        document.getElementById('refreshStatusText').innerText = "กำลังดึงข้อมูลสภาพอากาศ...";
+        document.getElementById('refreshStatusText').innerText = "กำลังดึงข้อมูล...";
         const data = await WeatherService.fetchWeather(currentLat, currentLng);
         if (!data || !data.current) {
             document.getElementById('refreshStatusText').innerText = "ดึงข้อมูลไม่สำเร็จ";
             return;
         }
 
+        // Weather Cards
         document.getElementById('valTemp').innerText = `${data.current.temperature_2m} °C`;
         document.getElementById('valHumidity').innerText = `${data.current.relative_humidity_2m} %`;
-        document.getElementById('valRain').innerText = `${data.current.precipitation} มม./ชม.`;
+        document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
         document.getElementById('valWindSpeed').innerText = `${data.current.wind_speed_10m} กม./ชม.`;
-        document.getElementById('valWindDir').innerText = `${data.current.wind_direction_10m}°`;
-        document.getElementById('valPressure').innerText = `${data.current.surface_pressure} hPa`;
-        document.getElementById('valPop').innerText = `${data.hourly?.precipitation_probability?.[2] || 0} %`;
+        
+        // Air Quality & UV
+        const pmVal = data.air_quality?.pm2_5 ? data.air_quality.pm2_5.toFixed(1) : "N/A";
+        document.getElementById('valPM25').innerText = `${pmVal} µg/m³`;
+        document.getElementById('valUV').innerText = data.daily?.uv_index_max?.[0] || "N/A";
+
+        // Sunrise/Sunset
+        if (data.daily?.sunrise?.[0]) {
+            const sr = data.daily.sunrise[0].split('T')[1];
+            const ss = data.daily.sunset[0].split('T')[1];
+            document.getElementById('valSun').innerText = `${sr} / ${ss}`;
+        }
 
         const risk = RiskEngine.calculateRisk(data);
-        document.getElementById('aiAnalysisResult').innerText = risk.score > 50 ? 
-            `พื้นที่ ${currentPlaceName} มีความเสี่ยงฝนตก (${risk.score} คะแนน) ควรพกร่ม` : 
-            `สภาพอากาศในพื้นที่ ${currentPlaceName} ปกติ มีแนวโน้มฝนตกน้อย`;
+        const alertBox = document.getElementById('alertBox');
+        
+        // Alert & Vibration Trigger
+        if (risk.score > 60 || risk.floodRisk) {
+            alertBox.classList.remove('d-none');
+            document.getElementById('alertMessage').innerText = risk.floodRisk ? 
+                `เสี่ยงน้ำท่วมขังในพื้นที่ ${currentPlaceName}! ปริมาณฝนสะสมสูง` : 
+                `เฝ้าระวังฝนตกหนัก (${risk.score} คะแนน) ในพื้นที่ ${currentPlaceName}`;
+            
+            // Mobile Vibration Alert
+            if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 400]);
+        } else {
+            alertBox.classList.add('d-none');
+        }
+
+        // AI Advice
+        let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปดี `;
+        if (risk.score > 60) aiMsg += `⚠️ แนะนำพกร่ม/ชุดกันฝน เฝ้าระวังการจราจรติดขัด `;
+        if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 ค่า PM2.5 สูงเกินเกณฑ์ ควรสวมหน้ากากอนามัยเมื่อออกนอกบ้าน`;
+        document.getElementById('aiAnalysisResult').innerText = aiMsg;
 
         renderChart(data);
         document.getElementById('refreshStatusText').innerText = `อัปเดตแล้ว: ${new Date().toLocaleTimeString('th-TH')}`;
@@ -212,20 +248,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function handleScan() {
         const list = document.getElementById('provinceRiskList');
-        list.innerHTML = `<div class="text-center p-3 text-muted">กำลังสแกนพื้นที่...</div>`;
+        list.innerHTML = `<div class="text-center p-3 text-muted">กำลังสแกนสภาพอากาศทั่วประเทศ...</div>`;
         scannedDataStore = [];
         
         for (const prov of LocationService.provinces) {
             const w = await WeatherService.fetchWeather(prov.lat, prov.lng);
             const r = RiskEngine.calculateRisk(w);
-            scannedDataStore.push({ name: prov.name, region: prov.region, score: r.score, level: r.level, badgeClass: r.badgeClass, rainPast: r.rainPast });
+            const pm = w?.air_quality?.pm2_5 ? w.air_quality.pm2_5.toFixed(1) : 0;
+            scannedDataStore.push({ name: prov.name, region: prov.region, score: r.score, level: r.level, badgeClass: r.badgeClass, rainPast: r.rainPast, pm25: pm });
         }
         scannedDataStore.sort((a,b) => b.score - a.score);
         
         list.innerHTML = '';
         scannedDataStore.forEach(item => {
             list.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center py-2">
-                <div><b>${item.name}</b> <small class="text-muted">(${item.region})</small></div>
+                <div><b>${item.name}</b> <small class="text-muted">(${item.region})</small>
+                <div class="small text-secondary">ฝน: ${item.rainPast} มม. | PM2.5: ${item.pm25}</div></div>
                 <span class="badge ${item.badgeClass} p-2">${item.score} ${item.level}</span>
             </div>`;
         });
@@ -258,7 +296,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Auto Initial Trigger
     refreshAllData();
     RadarService.loadRadarFrames().then(ts => {
         if(ts.length > 0) document.getElementById('radarTimeline').max = ts.length - 1;
