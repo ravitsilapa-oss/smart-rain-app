@@ -56,11 +56,48 @@ const RadarService = {
     timestamps: [],
     currentIndex: 0,
     intervalId: null,
+    locationMarker: null,
+    locationCircle: null,
+
     initMap(id, lat, lng) {
         if (this.map) return;
-        this.map = L.map(id).setView([lat, lng], 9);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(this.map);
+        // กำหนด maxZoom และ minZoom เพื่อป้องกันข้อผิดพลาด Zoom Level Not Supported ของ RainViewer
+        this.map = L.map(id, {
+            minZoom: 4,
+            maxZoom: 11
+        }).setView([lat, lng], 8);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+            attribution: '© OpenStreetMap',
+            maxZoom: 11
+        }).addTo(this.map);
+
+        this.updateLocationMarker(lat, lng, "ตำแหน่งปัจจุบัน");
     },
+
+    updateLocationMarker(lat, lng, name) {
+        if (!this.map) return;
+
+        // ลบหมุดเก่าออกก่อน (ถ้ามี)
+        if (this.locationMarker) this.map.removeLayer(this.locationMarker);
+        if (this.locationCircle) this.map.removeLayer(this.locationCircle);
+
+        // วาดหมุดสีแดงบนตำแหน่งปัจจุบัน
+        this.locationMarker = L.marker([lat, lng]).addTo(this.map)
+            .bindPopup(`<b>📍 ${name}</b><br>ละติจูด: ${lat.toFixed(4)}<br>ลองจิจูด: ${lng.toFixed(4)}`)
+            .openPopup();
+
+        // วาดวงกลมรัศมีครอบคลุมพื้นที่
+        this.locationCircle = L.circle([lat, lng], {
+            color: '#ff0033',
+            fillColor: '#ff0033',
+            fillOpacity: 0.15,
+            radius: 8000
+        }).addTo(this.map);
+
+        this.map.setView([lat, lng], 8);
+    },
+
     async loadRadarFrames() {
         try {
             const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
@@ -71,7 +108,12 @@ const RadarService = {
             this.radarLayers = [];
             pastFrames.forEach(frame => {
                 const tileUrl = `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-                const layer = L.tileLayer(tileUrl, { opacity: 0.6, zIndex: 100 });
+                const layer = L.tileLayer(tileUrl, { 
+                    opacity: 0.65, 
+                    zIndex: 100,
+                    maxZoom: 11,
+                    minZoom: 4
+                });
                 this.radarLayers.push(layer);
             });
             if (this.radarLayers.length > 0) this.showFrame(this.radarLayers.length - 1);
@@ -81,6 +123,7 @@ const RadarService = {
             return [];
         }
     },
+
     showFrame(index) {
         if (index < 0 || index >= this.radarLayers.length) return;
         this.radarLayers.forEach((layer, i) => {
@@ -91,6 +134,7 @@ const RadarService = {
         const d = new Date(this.timestamps[index] * 1000);
         document.getElementById('radarTimeLabel').innerText = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
     },
+
     playAnimation(cb) {
         if (this.intervalId) clearInterval(this.intervalId);
         this.intervalId = setInterval(() => {
@@ -99,6 +143,7 @@ const RadarService = {
             if (cb) cb(next);
         }, 1000);
     },
+
     stopAnimation() {
         if (this.intervalId) { clearInterval(this.intervalId); this.intervalId = null; }
     }
@@ -135,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentLat = parseFloat(document.getElementById('latInput').value) || currentLat;
         currentLng = parseFloat(document.getElementById('lngInput').value) || currentLng;
         currentPlaceName = `พิกัด (${currentLat.toFixed(2)}, ${currentLng.toFixed(2)})`;
+        RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
         refreshAllData();
     };
 
@@ -146,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentPlaceName = "ตำแหน่งปัจจุบัน";
             document.getElementById('latInput').value = currentLat;
             document.getElementById('lngInput').value = currentLng;
-            RadarService.map.setView([currentLat, currentLng], 10);
+            RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
             refreshAllData();
         } catch (e) { alert("GPS ไม่พร้อมใช้งาน: " + e.message); }
     };
@@ -160,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentLat = res.lat; currentLng = res.lng; currentPlaceName = res.name;
             document.getElementById('latInput').value = currentLat;
             document.getElementById('lngInput').value = currentLng;
-            RadarService.map.setView([currentLat, currentLng], 10);
+            RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
             refreshAllData();
         } else { alert("ไม่พบสถานที่"); }
     };
@@ -279,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentPlaceName = e.target.options[e.target.selectedIndex].text.split(' ')[0];
             document.getElementById('latInput').value = currentLat;
             document.getElementById('lngInput').value = currentLng;
-            RadarService.map.setView([currentLat, currentLng], 9);
+            RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
             refreshAllData();
         };
     }
@@ -301,4 +347,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(ts.length > 0) document.getElementById('radarTimeline').max = ts.length - 1;
     });
 });
-                                      
