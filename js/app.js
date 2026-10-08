@@ -13,6 +13,13 @@ const LocationService = {
         { name: "สงขลา", region: "ภาคใต้", lat: 7.1988, lng: 100.5951 },
         { name: "ภูเก็ต", region: "ภาคใต้", lat: 7.8804, lng: 98.3923 }
     ],
+    // จุดเสี่ยงน้ำท่วมขังเรื้อรัง กทม.
+    floodHotspots: [
+        { name: "จุดเสี่ยงน้ำท่วม: ถนนรัชดาภิเษก (หน้าศาลอาญา)", lat: 13.8167, lng: 100.5753 },
+        { name: "จุดเสี่ยงน้ำท่วม: ถนนแจ้งวัฒนะ (วงเวียนบางเขน)", lat: 13.8742, lng: 100.5971 },
+        { name: "จุดเสี่ยงน้ำท่วม: ถนนสุขุมวิท (อุดมสุข-แบริ่ง)", lat: 13.6685, lng: 100.6095 },
+        { name: "จุดเสี่ยงน้ำท่วม: ถนนพหลโยธิน (แยกเกษตร)", lat: 13.8402, lng: 100.5724 }
+    ],
     getCurrentGPS() {
         return new Promise((resolve, reject) => {
             if (!navigator.geolocation) return reject(new Error("เบราว์เซอร์ไม่รองรับ GPS"));
@@ -38,7 +45,7 @@ const LocationService = {
 const WeatherService = {
     async fetchWeather(lat, lng) {
         try {
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,is_day&daily=sunrise,sunset,uv_index_max&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,is_day&daily=sunrise,sunset,uv_index_max&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
             const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,european_aqi&timezone=Asia%2FBangkok`;
             
             const [wRes, aqRes] = await Promise.all([fetch(weatherUrl), fetch(aqUrl)]);
@@ -61,33 +68,37 @@ const RadarService = {
 
     initMap(id, lat, lng) {
         if (this.map) return;
-        // กำหนด maxZoom และ minZoom เพื่อป้องกันข้อผิดพลาด Zoom Level Not Supported ของ RainViewer
-        this.map = L.map(id, {
-            minZoom: 4,
-            maxZoom: 11
-        }).setView([lat, lng], 8);
+        this.map = L.map(id, { minZoom: 4, maxZoom: 11 }).setView([lat, lng], 8);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
             attribution: '© OpenStreetMap',
             maxZoom: 11
         }).addTo(this.map);
 
+        this.renderFloodHotspots();
         this.updateLocationMarker(lat, lng, "ตำแหน่งปัจจุบัน");
+    },
+
+    renderFloodHotspots() {
+        LocationService.floodHotspots.forEach(spot => {
+            L.circle([spot.lat, spot.lng], {
+                color: '#ff6b00',
+                fillColor: '#ff6b00',
+                fillOpacity: 0.3,
+                radius: 1200
+            }).addTo(this.map).bindPopup(`<b>⚠️ ${spot.name}</b><br>เฝ้าระวังน้ำท่วมขังเมื่อฝนตกหนัก`);
+        });
     },
 
     updateLocationMarker(lat, lng, name) {
         if (!this.map) return;
-
-        // ลบหมุดเก่าออกก่อน (ถ้ามี)
         if (this.locationMarker) this.map.removeLayer(this.locationMarker);
         if (this.locationCircle) this.map.removeLayer(this.locationCircle);
 
-        // วาดหมุดสีแดงบนตำแหน่งปัจจุบัน
         this.locationMarker = L.marker([lat, lng]).addTo(this.map)
             .bindPopup(`<b>📍 ${name}</b><br>ละติจูด: ${lat.toFixed(4)}<br>ลองจิจูด: ${lng.toFixed(4)}`)
             .openPopup();
 
-        // วาดวงกลมรัศมีครอบคลุมพื้นที่
         this.locationCircle = L.circle([lat, lng], {
             color: '#ff0033',
             fillColor: '#ff0033',
@@ -108,12 +119,7 @@ const RadarService = {
             this.radarLayers = [];
             pastFrames.forEach(frame => {
                 const tileUrl = `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-                const layer = L.tileLayer(tileUrl, { 
-                    opacity: 0.65, 
-                    zIndex: 100,
-                    maxZoom: 11,
-                    minZoom: 4
-                });
+                const layer = L.tileLayer(tileUrl, { opacity: 0.65, zIndex: 100, maxZoom: 11, minZoom: 4 });
                 this.radarLayers.push(layer);
             });
             if (this.radarLayers.length > 0) this.showFrame(this.radarLayers.length - 1);
@@ -167,10 +173,40 @@ const RiskEngine = {
     }
 };
 
+// --- Audio Alert Synthesizer ---
+function playSirenSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+    } catch (e) { console.log("Audio not supported"); }
+}
+
 // --- Main Application Loop ---
 document.addEventListener('DOMContentLoaded', async () => {
     let currentLat = 13.7563, currentLng = 100.5018, currentPlaceName = "กรุงเทพมหานคร";
     let chartInstance = null, isPlaying = false, scannedDataStore = [];
+    let deferredPrompt = null;
+
+    // PWA Install Event Handler
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const btn = document.getElementById('btnInstallPWA');
+        btn.classList.remove('d-none');
+        btn.onclick = () => {
+            btn.classList.add('d-none');
+            deferredPrompt.prompt();
+        };
+    });
 
     RadarService.initMap('map', currentLat, currentLng);
     initProvinceDropdown();
@@ -249,7 +285,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Weather Cards
-        document.getElementById('valTemp').innerText = `${data.current.temperature_2m} °C`;
+        const tempCurr = data.current.temperature_2m;
+        const tempApp = data.current.apparent_temperature;
+        document.getElementById('valTemp').innerText = `${tempCurr} °C (${tempApp} °C)`;
         document.getElementById('valHumidity').innerText = `${data.current.relative_humidity_2m} %`;
         document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
         document.getElementById('valWindSpeed').innerText = `${data.current.wind_speed_10m} กม./ชม.`;
@@ -269,14 +307,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const risk = RiskEngine.calculateRisk(data);
         const alertBox = document.getElementById('alertBox');
         
-        // Alert & Vibration Trigger
+        // Alert, Siren & Vibration Trigger
         if (risk.score > 60 || risk.floodRisk) {
             alertBox.classList.remove('d-none');
             document.getElementById('alertMessage').innerText = risk.floodRisk ? 
                 `เสี่ยงน้ำท่วมขังในพื้นที่ ${currentPlaceName}! ปริมาณฝนสะสมสูง` : 
                 `เฝ้าระวังฝนตกหนัก (${risk.score} คะแนน) ในพื้นที่ ${currentPlaceName}`;
             
-            // Mobile Vibration Alert
+            playSirenSound();
             if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 400]);
         } else {
             alertBox.classList.add('d-none');
