@@ -18,9 +18,12 @@
 
     <div class="container-fluid px-3 py-2 max-w-mobile">
         <!-- Header -->
-        <header class="my-2">
-            <h4 class="fw-bold text-primary mb-1">🌧️ ตรวจฝน น้ำท่วม & PM2.5</h4>
-            <p class="text-muted small mb-2">ระบบเตือนภัยสภาพอากาศและคุณภาพอากาศแบบเรียลไทม์</p>
+        <header class="my-2 d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="fw-bold text-primary mb-1">🌧️ ตรวจฝน น้ำท่วม & PM2.5</h4>
+                <p class="text-muted small mb-0">ระบบเตือนภัยสภาพอากาศและคุณภาพอากาศแบบเรียลไทม์</p>
+            </div>
+            <button id="btnInstallPWA" class="btn btn-sm btn-outline-primary fw-bold d-none">📲 ติดตั้งแอป</button>
         </header>
 
         <!-- Search Box -->
@@ -90,7 +93,7 @@
         <div class="row g-2 mb-3" id="weatherCardsContainer">
             <div class="col-6 col-md-3">
                 <div class="card p-2 text-center border-0 shadow-sm">
-                    <span class="small text-muted">อุณหภูมิ</span>
+                    <span class="small text-muted">อุณหภูมิ (รู้สึกจริง)</span>
                     <h4 class="mb-0 fw-bold text-danger" id="valTemp">-- °C</h4>
                 </div>
             </div>
@@ -174,7 +177,7 @@
         <!-- Rain Radar Map & Controls -->
         <div class="card shadow-sm mb-3 border-0 overflow-hidden">
             <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
-                <span>แผนที่เรดาร์ฝน (ย้อนหลัง 2 ชม.)</span>
+                <span>แผนที่เรดาร์ฝน & จุดเสี่ยงน้ำท่วม</span>
                 <span class="badge bg-primary" id="radarTimeLabel">--:-- น.</span>
             </div>
             <div id="map" style="height: 350px; width: 100%;"></div>
@@ -227,4 +230,5 @@
     <!-- Bundle Script -->
     <script src="js/app.js"></script>
 </body>
-</html>
+                        </html>
+                        
