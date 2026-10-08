@@ -13,12 +13,18 @@ const LocationService = {
         { name: "สงขลา", region: "ภาคใต้", lat: 7.1988, lng: 100.5951 },
         { name: "ภูเก็ต", region: "ภาคใต้", lat: 7.8804, lng: 98.3923 }
     ],
-    // จุดเสี่ยงน้ำท่วมขังเรื้อรัง กทม.
     floodHotspots: [
         { name: "จุดเสี่ยงน้ำท่วม: ถนนรัชดาภิเษก (หน้าศาลอาญา)", lat: 13.8167, lng: 100.5753 },
         { name: "จุดเสี่ยงน้ำท่วม: ถนนแจ้งวัฒนะ (วงเวียนบางเขน)", lat: 13.8742, lng: 100.5971 },
         { name: "จุดเสี่ยงน้ำท่วม: ถนนสุขุมวิท (อุดมสุข-แบริ่ง)", lat: 13.6685, lng: 100.6095 },
         { name: "จุดเสี่ยงน้ำท่วม: ถนนพหลโยธิน (แยกเกษตร)", lat: 13.8402, lng: 100.5724 }
+    ],
+    cctvCameras: [
+        { name: "กล้อง CCTV: แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300 },
+        { name: "กล้อง CCTV: ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605 },
+        { name: "กล้อง CCTV: แยกพญาไท / อนุสาวรีย์", lat: 13.7650, lng: 100.5380 },
+        { name: "กล้อง CCTV: แยกพระราม 9", lat: 13.7578, lng: 100.5654 },
+        { name: "กล้อง CCTV: แยกคลองเตย / สุขุมวิท", lat: 13.7200, lng: 100.5590 }
     ],
     getCurrentGPS() {
         return new Promise((resolve, reject) => {
@@ -68,14 +74,16 @@ const RadarService = {
 
     initMap(id, lat, lng) {
         if (this.map) return;
-        this.map = L.map(id, { minZoom: 4, maxZoom: 11 }).setView([lat, lng], 8);
+        // กำหนดให้ซูมแผนที่ได้ละเอียดระดับถนน/ซอย (maxZoom: 18)
+        this.map = L.map(id, { minZoom: 5, maxZoom: 18 }).setView([lat, lng], 10);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
             attribution: '© OpenStreetMap',
-            maxZoom: 11
+            maxZoom: 18
         }).addTo(this.map);
 
         this.renderFloodHotspots();
+        this.renderCCTVMarkers();
         this.updateLocationMarker(lat, lng, "ตำแหน่งปัจจุบัน");
     },
 
@@ -87,6 +95,20 @@ const RadarService = {
                 fillOpacity: 0.3,
                 radius: 1200
             }).addTo(this.map).bindPopup(`<b>⚠️ ${spot.name}</b><br>เฝ้าระวังน้ำท่วมขังเมื่อฝนตกหนัก`);
+        });
+    },
+
+    renderCCTVMarkers() {
+        LocationService.cctvCameras.forEach(cam => {
+            const camIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#e6007e;color:white;padding:3px 6px;border-radius:12px;font-size:12px;box-shadow:0 2px 4px rgba(0,0,0,0.3);font-weight:bold;'>📷 กล้อง</div>",
+                iconSize: [55, 25],
+                iconAnchor: [27, 12]
+            });
+
+            L.marker([cam.lat, cam.lng], { icon: camIcon }).addTo(this.map)
+                .bindPopup(`<b>📹 ${cam.name}</b><br><a href="https://traffic.longdo.com/" target="_blank" class="btn btn-sm btn-primary mt-1 text-white py-0 w-100">เปิดดูกล้องสด</a>`);
         });
     },
 
@@ -103,10 +125,11 @@ const RadarService = {
             color: '#ff0033',
             fillColor: '#ff0033',
             fillOpacity: 0.15,
-            radius: 8000
+            radius: 3000
         }).addTo(this.map);
 
-        this.map.setView([lat, lng], 8);
+        this.map.setView([lat, lng], 11);
+        setTimeout(() => { this.map.invalidateSize(); }, 300);
     },
 
     async loadRadarFrames() {
@@ -117,9 +140,17 @@ const RadarService = {
             this.timestamps = pastFrames.map(f => f.time);
             this.radarLayers.forEach(l => this.map.removeLayer(l));
             this.radarLayers = [];
+            
             pastFrames.forEach(frame => {
                 const tileUrl = `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-                const layer = L.tileLayer(tileUrl, { opacity: 0.65, zIndex: 100, maxZoom: 11, minZoom: 4 });
+                // ใช้ maxNativeZoom: 8 ขยายเรดาร์ตามการซูมแผนที่ ป้องกันลายน้ำ Zoom Level Not Supported
+                const layer = L.tileLayer(tileUrl, { 
+                    opacity: 0.6, 
+                    zIndex: 100,
+                    maxNativeZoom: 8,
+                    maxZoom: 18,
+                    tileSize: 256
+                });
                 this.radarLayers.push(layer);
             });
             if (this.radarLayers.length > 0) this.showFrame(this.radarLayers.length - 1);
@@ -173,7 +204,6 @@ const RiskEngine = {
     }
 };
 
-// --- Audio Alert Synthesizer ---
 function playSirenSound() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -196,22 +226,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     let chartInstance = null, isPlaying = false, scannedDataStore = [];
     let deferredPrompt = null;
 
-    // PWA Install Event Handler
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
         const btn = document.getElementById('btnInstallPWA');
-        btn.classList.remove('d-none');
-        btn.onclick = () => {
-            btn.classList.add('d-none');
-            deferredPrompt.prompt();
-        };
+        if (btn) {
+            btn.classList.remove('d-none');
+            btn.onclick = () => {
+                btn.classList.add('d-none');
+                deferredPrompt.prompt();
+            };
+        }
     });
 
     RadarService.initMap('map', currentLat, currentLng);
     initProvinceDropdown();
 
-    // Controls Handling
     document.getElementById('btnFetchLocation').onclick = () => {
         currentLat = parseFloat(document.getElementById('latInput').value) || currentLat;
         currentLng = parseFloat(document.getElementById('lngInput').value) || currentLng;
@@ -284,7 +314,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Weather Cards
         const tempCurr = data.current.temperature_2m;
         const tempApp = data.current.apparent_temperature;
         document.getElementById('valTemp').innerText = `${tempCurr} °C (${tempApp} °C)`;
@@ -292,12 +321,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
         document.getElementById('valWindSpeed').innerText = `${data.current.wind_speed_10m} กม./ชม.`;
         
-        // Air Quality & UV
         const pmVal = data.air_quality?.pm2_5 ? data.air_quality.pm2_5.toFixed(1) : "N/A";
         document.getElementById('valPM25').innerText = `${pmVal} µg/m³`;
         document.getElementById('valUV').innerText = data.daily?.uv_index_max?.[0] || "N/A";
 
-        // Sunrise/Sunset
         if (data.daily?.sunrise?.[0]) {
             const sr = data.daily.sunrise[0].split('T')[1];
             const ss = data.daily.sunset[0].split('T')[1];
@@ -307,7 +334,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const risk = RiskEngine.calculateRisk(data);
         const alertBox = document.getElementById('alertBox');
         
-        // Alert, Siren & Vibration Trigger
         if (risk.score > 60 || risk.floodRisk) {
             alertBox.classList.remove('d-none');
             document.getElementById('alertMessage').innerText = risk.floodRisk ? 
@@ -320,7 +346,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             alertBox.classList.add('d-none');
         }
 
-        // AI Advice
         let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปดี `;
         if (risk.score > 60) aiMsg += `⚠️ แนะนำพกร่ม/ชุดกันฝน เฝ้าระวังการจราจรติดขัด `;
         if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 ค่า PM2.5 สูงเกินเกณฑ์ ควรสวมหน้ากากอนามัยเมื่อออกนอกบ้าน`;
