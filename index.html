@@ -33,7 +33,7 @@
         </header>
 
         <!-- PWA Install Banner Button -->
-        <div id="pwaInstallBanner" class="card shadow-sm p-2 mb-3 border-primary bg-primary text-white">
+        <div id="pwaInstallBanner" class="card shadow-sm p-2 mb-3 border-primary bg-primary text-white" style="display:none;">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="small">
                     <strong>📱 ติดตั้งแอปนี้ลงมือถือ!</strong><br>
@@ -152,23 +152,28 @@
             </div>
         </div>
 
-        <!-- CCTV & Emergency SOS Tools -->
-        <div class="card shadow-sm p-2 mb-3 border-0 bg-white">
-            <div class="fw-bold text-dark mb-2 small">🛠️ เครื่องมือฉุกเฉิน & ตรวจพื้นที่สด</div>
+        <!-- Traffic & CCTV Tools (NEW: Traffic Congestion Map) -->
+        <div class="card shadow-sm p-3 mb-3 border-0 bg-white">
+            <div class="fw-bold text-dark mb-2 small">🚗 เช็กเส้นทางจราจรติดขัด & เลี่ยงเมือง (เรียลไทม์)</div>
             <div class="row g-2">
                 <div class="col-6">
-                    <a id="btnCCTV" href="https://traffic.longdo.com/" target="_blank" class="btn btn-outline-dark btn-sm w-100">
-                        📷 กล้อง CCTV สด
+                    <a href="https://traffic.longdo.com/" target="_blank" class="btn btn-warning btn-sm w-100 fw-bold text-dark">
+                        🚦 แผนที่รถติดสด
                     </a>
                 </div>
                 <div class="col-6">
-                    <a id="btnWaterLevel" href="https://dds.bangkok.go.th/" target="_blank" class="btn btn-outline-info btn-sm w-100">
+                    <a href="https://www.bangkoktraffic.com/" target="_blank" class="btn btn-outline-dark btn-sm w-100">
+                        📷 กล้อง CCTV กทม.
+                    </a>
+                </div>
+                <div class="col-6 mt-2">
+                    <a href="https://dds.bangkok.go.th/" target="_blank" class="btn btn-outline-info btn-sm w-100">
                         🌊 ระดับน้ำ คลอง กทม.
                     </a>
                 </div>
-                <div class="col-12 mt-1">
+                <div class="col-6 mt-2">
                     <a href="tel:1784" class="btn btn-danger btn-sm w-100 fw-bold">
-                        📞 โทรแจ้งเหตุภัยพิบัติ/น้ำท่วม (สายด่วน 1784)
+                        📞 สายด่วน 1784
                     </a>
                 </div>
             </div>
@@ -185,7 +190,7 @@
                 </div>
                 <button id="btnExportCSV" class="btn btn-outline-secondary btn-sm">ดาวน์โหลด CSV</button>
             </div>
-            <p class="small text-muted mb-0">แหล่งข้อมูล: Open-Meteo, RainViewer & BMA</p>
+            <p class="small text-muted mb-0">แหล่งข้อมูล: Open-Meteo, Longdo Traffic & BMA</p>
         </div>
 
         <!-- Province Risk List -->
