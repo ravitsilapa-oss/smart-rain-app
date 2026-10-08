@@ -51,7 +51,7 @@ const LocationService = {
 const WeatherService = {
     async fetchWeather(lat, lng) {
         try {
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,is_day&daily=sunrise,sunset,uv_index_max&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day&daily=sunrise,sunset,uv_index_max&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
             const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,european_aqi&timezone=Asia%2FBangkok`;
             
             const [wRes, aqRes] = await Promise.all([fetch(weatherUrl), fetch(aqUrl)]);
@@ -74,7 +74,6 @@ const RadarService = {
 
     initMap(id, lat, lng) {
         if (this.map) return;
-        // กำหนดให้ซูมแผนที่ได้ละเอียดระดับถนน/ซอย (maxZoom: 18)
         this.map = L.map(id, { minZoom: 5, maxZoom: 18 }).setView([lat, lng], 10);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
@@ -143,7 +142,6 @@ const RadarService = {
             
             pastFrames.forEach(frame => {
                 const tileUrl = `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-                // ใช้ maxNativeZoom: 8 ขยายเรดาร์ตามการซูมแผนที่ ป้องกันลายน้ำ Zoom Level Not Supported
                 const layer = L.tileLayer(tileUrl, { 
                     opacity: 0.6, 
                     zIndex: 100,
@@ -225,6 +223,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentLat = 13.7563, currentLng = 100.5018, currentPlaceName = "กรุงเทพมหานคร";
     let chartInstance = null, isPlaying = false, scannedDataStore = [];
     let deferredPrompt = null;
+
+    // Dark Mode Toggle
+    document.getElementById('btnToggleDark').onclick = () => {
+        document.body.classList.toggle('bg-dark');
+        document.body.classList.toggle('text-white');
+    };
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
@@ -321,9 +325,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
         document.getElementById('valWindSpeed').innerText = `${data.current.wind_speed_10m} กม./ชม.`;
         
+        // Visibility
+        const visKm = data.current.visibility ? (data.current.visibility / 1000).toFixed(1) : "N/A";
+        document.getElementById('valVisibility').innerText = `${visKm} กม.`;
+
         const pmVal = data.air_quality?.pm2_5 ? data.air_quality.pm2_5.toFixed(1) : "N/A";
         document.getElementById('valPM25').innerText = `${pmVal} µg/m³`;
-        document.getElementById('valUV').innerText = data.daily?.uv_index_max?.[0] || "N/A";
 
         if (data.daily?.sunrise?.[0]) {
             const sr = data.daily.sunrise[0].split('T')[1];
@@ -349,6 +356,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปดี `;
         if (risk.score > 60) aiMsg += `⚠️ แนะนำพกร่ม/ชุดกันฝน เฝ้าระวังการจราจรติดขัด `;
         if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 ค่า PM2.5 สูงเกินเกณฑ์ ควรสวมหน้ากากอนามัยเมื่อออกนอกบ้าน`;
+        if (data.current.visibility < 3000) aiMsg += ` 🚗 วิสัยทัศน์การมองเห็นต่ำ ควรเปิดไฟหน้าขับขี่ด้วยความระมัดระวัง`;
         document.getElementById('aiAnalysisResult').innerText = aiMsg;
 
         renderChart(data);
