@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบตรวจฝนและสภาพอากาศอัจฉริยะ</title>
+    <title>ระบบตรวจฝน น้ำท่วม & PM2.5 อัจฉริยะ</title>
+    <!-- Web App / PWA Meta -->
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Leaflet CSS -->
@@ -15,8 +19,8 @@
     <div class="container-fluid px-3 py-2 max-w-mobile">
         <!-- Header -->
         <header class="my-2">
-            <h4 class="fw-bold text-primary mb-1">ตรวจฝนและสภาพอากาศ</h4>
-            <p class="text-muted small mb-2">ระบบตรวจวัดเรดาร์ฝนและวิเคราะห์ความเสี่ยงอัจฉริยะ</p>
+            <h4 class="fw-bold text-primary mb-1">🌧️ ตรวจฝน น้ำท่วม & PM2.5</h4>
+            <p class="text-muted small mb-2">ระบบเตือนภัยสภาพอากาศและคุณภาพอากาศแบบเรียลไทม์</p>
         </header>
 
         <!-- Search Box -->
@@ -47,16 +51,16 @@
                     <button id="btnFetchLocation" class="btn btn-outline-primary btn-sm w-100">ดึงข้อมูล</button>
                 </div>
                 <div class="col-6">
-                    <button id="btnGPS" class="btn btn-success btn-sm w-100">ใช้ตำแหน่งปัจจุบัน</button>
+                    <button id="btnGPS" class="btn btn-success btn-sm w-100">📍 ใช้ GPS ปัจจุบัน</button>
                 </div>
                 <div class="col-12 mt-2">
-                    <label class="form-label small text-muted mb-1">ขอบเขตสแกน</label>
+                    <label class="form-label small text-muted mb-1">ขอบเขตสแกนความเสี่ยง</label>
                     <div class="input-group">
                         <select id="scanScope" class="form-select form-select-sm">
                             <option value="point" selected>จุดปัจจุบัน</option>
                             <option value="all">ทั้งประเทศ (รายจังหวัด)</option>
                         </select>
-                        <button id="btnScan" class="btn btn-primary btn-sm">สแกนพื้นที่</button>
+                        <button id="btnScan" class="btn btn-primary btn-sm">สแกนวิเคราะห์</button>
                     </div>
                 </div>
             </div>
@@ -78,8 +82,8 @@
         </div>
 
         <!-- Alert Notification Box -->
-        <div id="alertBox" class="alert alert-warning d-none shadow-sm mb-3" role="alert">
-            <strong id="alertTitle">เตือนภัย!</strong> <span id="alertMessage">พบกลุ่มฝนกำลังเคลื่อนเข้าใกล้พื้นที่</span>
+        <div id="alertBox" class="alert alert-danger d-none shadow-sm mb-3" role="alert">
+            <strong id="alertTitle">🚨 เตือนภัย!</strong> <span id="alertMessage">พบกลุ่มฝนหนักหรือเสี่ยงน้ำท่วมขัง</span>
         </div>
 
         <!-- Weather Cards Summary -->
@@ -98,14 +102,14 @@
             </div>
             <div class="col-6 col-md-3">
                 <div class="card p-2 text-center border-0 shadow-sm">
-                    <span class="small text-muted">โอกาสฝนตก</span>
-                    <h4 class="mb-0 fw-bold text-primary" id="valPop">-- %</h4>
+                    <span class="small text-muted">ฝนตกปัจจุบัน</span>
+                    <h4 class="mb-0 fw-bold text-primary" id="valRain">-- มม./ชม.</h4>
                 </div>
             </div>
             <div class="col-6 col-md-3">
                 <div class="card p-2 text-center border-0 shadow-sm">
-                    <span class="small text-muted">ปริมาณฝน</span>
-                    <h4 class="mb-0 fw-bold text-primary" id="valRain">-- มม./ชม.</h4>
+                    <span class="small text-muted">PM2.5 / AQI</span>
+                    <h4 class="mb-0 fw-bold text-warning" id="valPM25">-- µg/m³</h4>
                 </div>
             </div>
             <div class="col-4 col-md-4 mt-2">
@@ -116,14 +120,31 @@
             </div>
             <div class="col-4 col-md-4 mt-2">
                 <div class="card p-2 text-center border-0 shadow-sm">
-                    <span class="small text-muted">ทิศทางลม</span>
-                    <div class="fw-bold" id="valWindDir">--°</div>
+                    <span class="small text-muted">ดัชนี UV</span>
+                    <div class="fw-bold text-warning" id="valUV">--</div>
                 </div>
             </div>
             <div class="col-4 col-md-4 mt-2">
                 <div class="card p-2 text-center border-0 shadow-sm">
-                    <span class="small text-muted">ความกดอากาศ</span>
-                    <div class="fw-bold" id="valPressure">-- hPa</div>
+                    <span class="small text-muted">ดวงอาทิตย์</span>
+                    <div class="fw-bold small" id="valSun">--:-- / --:--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CCTV & Water Level Direct Tools -->
+        <div class="card shadow-sm p-2 mb-3 border-0 bg-white">
+            <div class="fw-bold text-dark mb-2 small">📹 ตรวจเช็กพื้นที่จริงสดๆ</div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <a id="btnCCTV" href="https://www.bmacctv.com/" target="_blank" class="btn btn-outline-dark btn-sm w-100">
+                        📷 กล้อง CCTV กทม.
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a id="btnWaterLevel" href="https://dds.bangkok.go.th/" target="_blank" class="btn btn-outline-info btn-sm w-100">
+                        🌊 ระดับน้ำ คลอง กทม.
+                    </a>
                 </div>
             </div>
         </div>
@@ -139,14 +160,14 @@
                 </div>
                 <button id="btnExportCSV" class="btn btn-outline-secondary btn-sm">ดาวน์โหลด CSV</button>
             </div>
-            <p class="small text-muted mb-0">แหล่งข้อมูล: Open-Meteo & RainViewer API</p>
+            <p class="small text-muted mb-0">แหล่งข้อมูล: Open-Meteo, RainViewer & BMA</p>
         </div>
 
         <!-- Province Risk List -->
         <div class="card shadow-sm mb-3 border-0">
             <div class="card-header bg-white fw-bold py-2">สถิติความเสี่ยงรายพื้นที่</div>
             <div class="list-group list-group-flush scrollable-list" id="provinceRiskList">
-                <div class="text-center p-3 text-muted">กดปุ่ม "สแกนพื้นที่" เพื่อดึงข้อมูล</div>
+                <div class="text-center p-3 text-muted">กดปุ่ม "สแกนวิเคราะห์" เพื่อดึงข้อมูล</div>
             </div>
         </div>
 
@@ -188,13 +209,13 @@
 
         <!-- AI Weather Analysis -->
         <div class="card shadow-sm p-3 mb-3 border-0 bg-white">
-            <div class="fw-bold text-primary mb-2">🤖 AI วิเคราะห์สภาพอากาศ</div>
+            <div class="fw-bold text-primary mb-2">🤖 AI วิเคราะห์สภาพอากาศ & คำแนะนำ</div>
             <p id="aiAnalysisResult" class="mb-0 text-secondary small">พร้อมประมวลผลข้อมูลสภาพอากาศ...</p>
         </div>
 
         <!-- Share & Action Buttons -->
         <div class="d-grid gap-2 mb-4">
-            <button id="btnShareLine" class="btn btn-success fw-bold py-2">🟢 แชร์รายงานไป LINE</button>
+            <button id="btnShareLine" class="btn btn-success fw-bold py-2">🟢 แชร์รายงานเข้า LINE</button>
         </div>
     </div>
 
