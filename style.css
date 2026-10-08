@@ -1,0 +1,24 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+}
+
+.max-w-mobile {
+    max-width: 768px;
+    margin: 0 auto;
+}
+
+.scrollable-list {
+    max-height: 280px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#map {
+    z-index: 1;
+}
+
+.badge-risk-high { background-color: #dc3545; color: #fff; }
+.badge-risk-medhigh { background-color: #fd7e14; color: #fff; }
+.badge-risk-med { background-color: #ffc107; color: #000; }
+.badge-risk-low { background-color: #198754; color: #fff; }
