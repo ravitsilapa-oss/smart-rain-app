@@ -27,10 +27,10 @@ const LocationService = {
         { name: "จุดเสี่ยงน้ำท่วม: ถนนพหลโยธิน (แยกเกษตร)", lat: 13.8402, lng: 100.5724 }
     ],
     cctvCameras: [
-        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย" },
-        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย" },
-        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย" },
-        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย" }
+        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" },
+        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" },
+        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" },
+        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" }
     ],
     waterCanals: [
         { name: "คลองแสนแสบ (สะพานผ่านฟ้า)", current: "+0.45 ม.", bank: "+1.20 ม.", status: "ปกติ" },
@@ -64,13 +64,9 @@ const WeatherService = {
     async fetchWeather(lat, lng) {
         try {
             const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day,weather_code&daily=sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&hourly=precipitation_probability,precipitation&timezone=Asia%2FBangkok`;
-            
             const res = await fetch(weatherUrl);
-            const wData = await res.json();
-            return wData;
-        } catch (e) {
-            return null;
-        }
+            return await res.json();
+        } catch (e) { return null; }
     },
     async fetchAirQuality(lat, lng) {
         try {
@@ -78,9 +74,7 @@ const WeatherService = {
             const res = await fetch(aqUrl);
             const data = await res.json();
             return data?.current?.pm2_5 || 25.0;
-        } catch (e) {
-            return 25.0;
-        }
+        } catch (e) { return 25.0; }
     }
 };
 
@@ -139,7 +133,7 @@ const RadarService = {
             });
 
             L.marker([cam.lat, cam.lng], { icon: camIcon }).addTo(this.map)
-                .bindPopup(`<b>📹 ${cam.name}</b><br>สถานะ: ${cam.status}<br>น้ำสูง: ${cam.waterLevel}`);
+                .bindPopup(`<b>📹 ${cam.name}</b><br>สถานะ: ${cam.status}<br>น้ำสูง: ${cam.waterLevel}<br><a href="${cam.url}" target="_blank" class="btn btn-sm btn-primary mt-1 text-white py-0 w-100">เปิดดูกล้องสด</a>`);
         });
     },
 
@@ -185,9 +179,7 @@ const RadarService = {
             });
             if (this.radarLayers.length > 0) this.showFrame(this.radarLayers.length - 1);
             return this.timestamps;
-        } catch (e) {
-            return [];
-        }
+        } catch (e) { return []; }
     },
 
     showFrame(index) {
@@ -383,10 +375,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (display) {
                     display.innerHTML = `
                         <div class="text-start p-2" style="font-size:0.8rem;">
-                            <div class="text-warning fw-bold mb-1"><i class="fa-solid fa-microchip"></i> AI Vision Analysis: ${cam.name}</div>
-                            <div>🌊 ระดับน้ำผิวจราจร: <span class="text-info fw-bold">${cam.waterLevel}</span></div>
+                            <div class="text-warning fw-bold mb-1"><i class="fa-solid fa-microchip"></i> AI Vision: ${cam.name}</div>
+                            <div>🌊 น้ำผิวจราจร: <span class="text-info fw-bold">${cam.waterLevel}</span></div>
                             <div>🔍 สถานะ AI: <span class="text-success">${cam.status}</span></div>
-                            <div>🛡️ ระบบ PDPA: <span class="text-light">${cam.pdpa}</span></div>
+                            <div>🛡️ PDPA: <span class="text-light">${cam.pdpa}</span></div>
+                            <a href="${cam.url}" target="_blank" class="btn btn-sm btn-danger mt-2 w-100 fw-bold">🎥 เปิดดูกล้อง CCTV สด</a>
                         </div>`;
                 }
             };
@@ -398,7 +391,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const statusText = document.getElementById('refreshStatusText');
         if (statusText) statusText.innerText = "กำลังซิงค์ข้อมูล...";
         
-        // Load weather instantly
         const data = await WeatherService.fetchWeather(currentLat, currentLng);
         if (!data || !data.current) {
             if (statusText) statusText.innerText = "ดึงข้อมูลล้มเหลว";
@@ -414,7 +406,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const visKm = data.current.visibility ? (data.current.visibility / 1000).toFixed(1) : "N/A";
         document.getElementById('valVisibility').innerText = `${visKm} กม.`;
 
-        // Render charts & forecasts immediately
         const risk = RiskEngine.calculateRisk(data);
         const alertBox = document.getElementById('alertBox');
         
@@ -436,7 +427,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderChart(data);
         if (statusText) statusText.innerText = `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
-        // Fetch Air Quality asynchronously in background
         WeatherService.fetchAirQuality(currentLat, currentLng).then(pmVal => {
             const pmBadge = document.getElementById('valPM25Badge');
             if (pmBadge) pmBadge.innerText = `PM2.5: ${pmVal.toFixed(1)} µg/m³`;
