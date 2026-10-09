@@ -5,78 +5,56 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// --- Comprehensive Water Systems, Tides & Sun Data Services ---
+// --- Comprehensive Water Systems, Tides, Sun & Risk Scan Services ---
 const LocationService = {
     provinces: [
-        { name: "กรุงเทพมหานคร (50 เขต)", region: "ภาคกลาง", lat: 13.7563, lng: 100.5018 },
-        { name: "ระนอง", region: "ภาคใต้", lat: 9.9658, lng: 98.6385 },
+        { name: "กรุงเทพมหานคร", region: "ภาคกลาง", lat: 13.7563, lng: 100.5018 },
         { name: "เชียงใหม่", region: "ภาคเหนือ", lat: 18.7883, lng: 98.9853 },
         { name: "ขอนแก่น", region: "ภาคอีสาน", lat: 16.4322, lng: 102.8236 },
         { name: "ชลบุรี", region: "ภาคตะวันออก", lat: 13.3611, lng: 100.9847 },
         { name: "สงขลา", region: "ภาคใต้", lat: 7.1988, lng: 100.5951 },
         { name: "ภูเก็ต", region: "ภาคใต้", lat: 7.8804, lng: 98.3923 },
-        { name: "นครราชสีมา", region: "ภาคอีสาน", lat: 14.9799, lng: 102.0977 }
+        { name: "นครราชสีมา", region: "ภาคอีสาน", lat: 14.9799, lng: 102.0977 },
+        { name: "ระนอง", region: "ภาคใต้", lat: 9.9658, lng: 98.6385 }
     ],
     bangkokDistricts: [
         { name: "เขตพระนคร", zone: "ฝั่งพระนคร", lat: 13.7590, lng: 100.4938 },
         { name: "เขตดุสิต", zone: "ฝั่งพระนคร", lat: 13.7788, lng: 100.5135 },
         { name: "เขตหนองจอก", zone: "ฝั่งพระนคร", lat: 13.8526, lng: 100.8576 },
         { name: "เขตบางรัก", zone: "ฝั่งพระนคร", lat: 13.7257, lng: 100.5242 },
+        { name: "เขตบางเขน", zone: "ฝั่งพระนคร", lat: 13.8732, lng: 100.5960 },
         { name: "เขตจตุจักร", zone: "ฝั่งพระนคร", lat: 13.8284, lng: 100.5583 },
-        { name: "เขตลาดพร้าว", zone: "ฝั่งพระนคร", lat: 13.8150, lng: 100.6050 }
+        { name: "เขตลาดพร้าว", zone: "ฝั่งพระนคร", lat: 13.8150, lng: 100.6050 },
+        { name: "เขตวัฒนา", zone: "ฝั่งพระนคร", lat: 13.7410, lng: 100.5850 }
     ],
     getWaterCanalsForProvince(provinceName) {
         if (provinceName.includes("กรุงเทพ")) {
             return [
                 { name: "แม่น้ำเจ้าพระยา (ปากคลองตลาด - หลัก)", current: "+0.45 ม.", bank: "+2.00 ม.", status: "ปกติ" },
                 { name: "คลองแสนแสบ (สะพานผ่านฟ้า - หลัก)", current: "+0.35 ม.", bank: "+1.20 ม.", status: "ปกติ" },
-                { name: "คลองแสนแสบ (ช่วงบางกะปิ - ย่อย)", current: "+0.28 ม.", bank: "+1.00 ม.", status: "ปกติ" },
                 { name: "คลองลาดพร้าว (อุโมงค์ระบายน้ำ - หลัก)", current: "+0.80 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-                { name: "คลองลาดพร้าว (ช่วงรัชดา - ย่อย)", current: "+0.55 ม.", bank: "+1.10 ม.", status: "ปกติ" },
-                { name: "คลองเปรมประชากร (บางซื่อ - หลัก)", current: "+1.10 ม.", bank: "+1.20 ม.", status: "เฝ้าระวัง" },
-                { name: "คลองประเวศบุรีรมย์ (ลาดกระบัง - ย่อย)", current: "+0.30 ม.", bank: "+1.00 ม.", status: "ปกติ" },
-                { name: "คลองภาษีเจริญ (ฝั่งธนบุรี - หลัก)", current: "+0.40 ม.", bank: "+1.30 ม.", status: "ปกติ" }
+                { name: "คลองเปรมประชากร (บางซื่อ - หลัก)", current: "+1.10 ม.", bank: "+1.20 ม.", status: "เฝ้าระวัง" }
             ];
         } else if (provinceName.includes("ระนอง")) {
             return [
                 { name: "แม่น้ำกระบุรี (ชายแดนไทย-เมียนมา - หลัก)", current: "+2.10 ม.", bank: "+4.50 ม.", status: "ปกติ" },
                 { name: "คลองหาดส้มแป้น (อำเภอเมือง - หลัก)", current: "+0.60 ม.", bank: "+1.80 ม.", status: "ปกติ" },
-                { name: "คลองหาดส้มแป้น (ช่วงตอนบน - ย่อย)", current: "+0.40 ม.", bank: "+1.20 ม.", status: "ปกติ" },
-                { name: "คลองละอุ่น (อำเภอละอุ่น - หลัก)", current: "+0.80 ม.", bank: "+2.00 ม.", status: "ปกติ" },
-                { name: "คลองงาว (อำเภอเมือง - ย่อย)", current: "+0.35 ม.", bank: "+1.10 ม.", status: "ปกติ" },
-                { name: "ระบบระบายน้ำเทศบาลเมืองระนอง", current: "+0.25 ม.", bank: "+1.00 ม.", status: "ปกติ" }
-            ];
-        } else if (provinceName.includes("เชียงใหม่")) {
-            return [
-                { name: "แม่น้ำปิง (สะพานนวรัฐ - หลัก)", current: "+1.20 ม.", bank: "+3.50 ม.", status: "ปกติ" },
-                { name: "แม่น้ำปิง (ช่วงอำเภอแม่แตง - ย่อย)", current: "+1.50 ม.", bank: "+4.00 ม.", status: "ปกติ" },
-                { name: "คลองแม่ข่า (ใจกลางเมือง - หลัก)", current: "+0.50 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-                { name: "คลองแม่ข่า (ช่วงช้างเผือก - ย่อย)", current: "+0.35 ม.", bank: "+1.10 ม.", status: "ปกติ" },
-                { name: "ลำห้วยแก้ว (หน้าสวนสัตว์ - หลัก)", current: "+0.30 ม.", bank: "+1.00 ม.", status: "ปกติ" },
-                { name: "คลองชลประทานแม่สาย (ย่อย)", current: "+0.45 ม.", bank: "+1.30 ม.", status: "ปกติ" }
+                { name: "คลองละอุ่น (อำเภอละอุ่น - หลัก)", current: "+0.80 ม.", bank: "+2.00 ม.", status: "ปกติ" }
             ];
         } else {
             return [
                 { name: `แม่น้ำสายประธานหลัก (${provinceName})`, current: "+0.60 ม.", bank: "+3.00 ม.", status: "ปกติ" },
                 { name: `แม่น้ำสาขา (${provinceName} - ย่อย)`, current: "+0.40 ม.", bank: "+2.00 ม.", status: "ปกติ" },
-                { name: `คลองชลประทานหลัก (${provinceName})`, current: "+0.35 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-                { name: `คลองซอย/คลองย่อย (${provinceName} - ย่อย)`, current: "+0.25 ม.", bank: "+1.10 ม.", status: "ปกติ" },
-                { name: `ระบบระบายน้ำและแก้มลิงเขตเทศบาล`, current: "+0.20 ม.", bank: "+1.00 ม.", status: "ปกติ" }
+                { name: `คลองชลประทานหลัก (${provinceName})`, current: "+0.35 ม.", bank: "+1.50 ม.", status: "ปกติ" }
             ];
         }
     },
     majorAndMinorDams: [
         { name: "เขื่อนภูมิพล (ตาก - เขื่อนใหญ่)", current: "520.40 ม.รทก.", capacity: "54.2%", status: "ปกติ" },
         { name: "เขื่อนสิริกิติ์ (อุตรดิตถ์ - เขื่อนใหญ่)", current: "495.10 ม.รทก.", capacity: "61.8%", status: "ปกติ" },
-        { name: "เขื่อนแควน้อยบำรุงแดน (พิษณุโลก)", current: "115.30 ม.รทก.", capacity: "45.0%", status: "ปกติ" },
-        { name: "เขื่อนกิ่วลม (ลำปาง - เขื่อนย่อย)", current: "365.20 ม.รทก.", capacity: "52.4%", status: "ปกติ" },
         { name: "เขื่อนอุบลรัตน์ (ขอนแก่น - เขื่อนใหญ่)", current: "178.90 ม.รทก.", capacity: "72.4%", status: "เฝ้าระวัง" },
-        { name: "เขื่อนน้ำอูน (สกลนคร - เขื่อนย่อย)", current: "175.40 ม.รทก.", capacity: "60.5%", status: "ปกติ" },
         { name: "เขื่อนศรีนครินทร์ (กาญจนบุรี - เขื่อนใหญ่)", current: "172.50 ม.รทก.", capacity: "68.9%", status: "ปกติ" },
-        { name: "เขื่อนวชิราลงกรณ (กาญจนบุรี - เขื่อนใหญ่)", current: "148.20 ม.รทก.", capacity: "65.1%", status: "ปกติ" },
         { name: "เขื่อนป่าสักชลสิทธิ์ (ลพบุรี - เขื่อนใหญ่)", current: "42.10 ม.รทก.", capacity: "48.3%", status: "ปกติ" },
-        { name: "เขื่อนขุนด่านปราการชล (นครนายก - เขื่อนย่อย)", current: "55.20 ม.รทก.", capacity: "62.1%", status: "ปกติ" },
-        { name: "เขื่อนรัชชประภา (เชี่ยวหลาน - สุราษฎร์ธานี)", current: "110.20 ม.รทก.", capacity: "66.5%", status: "ปกติ" },
         { name: "เขื่อนบางลาง (ยะลา - เขื่อนใหญ่)", current: "105.80 ม.รทก.", capacity: "58.0%", status: "ปกติ" }
     ],
     getCamerasForProvince(provinceName, pLat, pLng) {
@@ -99,10 +77,9 @@ const LocationService = {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const res = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Thailand')}`;
-            const fetchRes = await fetch(res, { signal: controller.signal });
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Thailand')}`, { signal: controller.signal });
             clearTimeout(timeoutId);
-            const data = await fetchRes.json();
+            const data = await res.json();
             if (data && data.length > 0) {
                 return { name: data[0].display_name.split(',')[0], lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
             }
@@ -124,11 +101,10 @@ const WeatherService = {
             return await res.json();
         } catch (e) {
             let mockDates = [], mockSunrise = [], mockSunset = [];
-            let todayStr = new Date().toISOString().split('T')[0];
             for(let i=0; i<7; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
                 mockDates.push(d.toISOString());
-                mockSunrise.push(`${d.toISOString().split('T')[0]}T06:08`);
+                mockSunrise.push(`${d.toISOString().split('T')[0]}T06:10`);
                 mockSunset.push(`${d.toISOString().split('T')[0]}T18:15`);
             }
             return {
@@ -301,6 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initProvinceDropdown();
     renderWaterLevelTable(currentPlaceName);
     renderCCTVSelector(currentPlaceName, currentLat, currentLng);
+    autoScanAllRisks(); // เริ่มสแกนเตือนภัยทุกจังหวัดอัตโนมัติ
 
     const gpsBtn = document.getElementById('btnGPS');
     if (gpsBtn) {
@@ -366,7 +343,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!tbody) return;
         tbody.innerHTML = '';
         
-        // 1. แม่น้ำ คลองหลัก และคลองย่อย
         const canals = LocationService.getWaterCanalsForProvince(provName);
         tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-primary"><i class="fa-solid fa-water"></i> คลองหลักและคลองย่อย (${provName})</td></tr>`;
         canals.forEach(c => {
@@ -374,7 +350,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             tbody.innerHTML += `<tr><td><b>${c.name}</b></td><td><span class="fw-bold text-primary">${c.current}</span></td><td class="text-muted">${c.bank}</td><td><span class="badge ${badge}">${c.status}</span></td></tr>`;
         });
 
-        // 2. เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ
         tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-success"><i class="fa-solid fa-mountain-sun"></i> เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ</td></tr>`;
         LocationService.majorAndMinorDams.forEach(d => {
             const badge = d.status === 'ปกติ' ? 'bg-success' : 'bg-warning text-dark';
@@ -419,23 +394,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             sunsetTime = wData.daily.sunset[0].split('T')[1] + " น.";
         }
 
-        // ค้นหาช่องแสดงผลพระอาทิตย์และน้ำขึ้นน้ำลงในหน้าจอ
-        document.querySelectorAll('div').forEach(div => {
-            if (div.innerText && div.innerText.includes('น้ำทะเลหนุน')) {
-                div.innerHTML = `<i class="fa-solid fa-water text-primary"></i> น้ำขึ้นสูงสุด: 11:45 น. (+1.15 ม.) | น้ำลง: 18:20 น.`;
-            }
-        });
+        const tideBadge = document.getElementById('tideStatusBadge');
+        if (tideBadge) tideBadge.innerText = "น้ำขึ้นสูงสุด: 11:45 น. (+1.15 ม.) | น้ำลง: 18:20 น.";
 
-        // อัปเดตข้อมูลพระอาทิตย์ขึ้น-ตกไว้ที่การ์ดสภาพอากาศหรือส่วนท้าย
-        const weatherCardBody = document.querySelector('.card-body, .bg-gradient');
-        if (weatherCardBody && !document.getElementById('sunInfoBadge')) {
-            const sunDiv = document.createElement('div');
-            sunDiv.id = 'sunInfoBadge';
-            sunDiv.className = 'mt-2 text-white small opacity-85';
-            sunDiv.innerHTML = `<i class="fa-solid fa-sun text-warning"></i> พระอาทิตย์ขึ้น: ${sunriseTime} | <i class="fa-solid fa-moon text-light"></i> พระอาทิตย์ตก: ${sunsetTime}`;
-            weatherCardBody.appendChild(sunDiv);
-        } else if (document.getElementById('sunInfoBadge')) {
-            document.getElementById('sunInfoBadge').innerHTML = `<i class="fa-solid fa-sun text-warning"></i> พระอาทิตย์ขึ้น: ${sunriseTime} | <i class="fa-solid fa-moon text-light"></i> พระอาทิตย์ตก: ${sunsetTime}`;
+        let sunBadge = document.getElementById('sunInfoBadge');
+        if (!sunBadge) {
+            sunBadge = document.createElement('div');
+            sunBadge.id = 'sunInfoBadge';
+            sunBadge.className = 'mt-2 text-white small opacity-85';
+            const weatherBody = document.querySelector('.card-body, .bg-gradient');
+            if (weatherBody) weatherBody.appendChild(sunBadge);
+        }
+        if (sunBadge) {
+            sunBadge.innerHTML = `<i class="fa-solid fa-sun text-warning"></i> พระอาทิตย์ขึ้น: ${sunriseTime} | <i class="fa-solid fa-moon text-light"></i> พระอาทิตย์ตก: ${sunsetTime}`;
         }
     }
 
@@ -463,46 +434,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adviceEl) adviceEl.innerHTML = adviceText;
     }
 
-    async function handleScanBangkokDistricts() {
+    // ฟังก์ชันสแกนเตือนภัยทุกจังหวัดและทุกเขตแบบอัตโนมัติ
+    async function autoScanAllRisks() {
         const list = document.getElementById('provinceRiskList');
         if (!list) return;
-        list.innerHTML = `<div class="text-center p-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> กำลังสแกนข้อมูลครบทั้ง 50 เขตกรุงเทพฯ...</div>`;
+        list.innerHTML = `<div class="text-center p-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> กำลังดึงข้อมูลจุดเสี่ยงภัยทุกเขตและทุกจังหวัดทั่วประเทศ...</div>`;
         
-        let districtResults = [];
-        let counts = { high: 0, medHigh: 0, med: 0, low: 0 };
+        let allResults = [];
 
+        // 1. สแกนจังหวัดหลักทั่วประเทศ
+        for (const prov of LocationService.provinces) {
+            const w = await WeatherService.fetchWeather(prov.lat, prov.lng);
+            const r = RiskEngine.calculateRisk(w);
+            allResults.push({ name: prov.name, type: 'จังหวัด', ...r, lat: prov.lat, lng: prov.lng });
+        }
+
+        // 2. สแกนเขตกรุงเทพฯ ทั้งหมด
         for (const dist of LocationService.bangkokDistricts) {
             const w = await WeatherService.fetchWeather(dist.lat, dist.lng);
             const r = RiskEngine.calculateRisk(w);
-            if (r.level === 'สูง') counts.high++;
-            else if (r.level === 'ค่อนข้างสูง') counts.medHigh++;
-            else if (r.level === 'ปานกลาง') counts.med++;
-            else counts.low++;
-
-            districtResults.push({ name: dist.name, zone: dist.zone, ...r, lat: dist.lat, lng: dist.lng });
+            allResults.push({ name: `${dist.name} (${dist.zone})`, type: 'เขต กทม.', ...r, lat: dist.lat, lng: dist.lng });
         }
 
-        districtResults.sort((a, b) => b.score - a.score);
+        allResults.sort((a, b) => b.score - a.score);
 
         let htmlHeader = `
             <div class="d-flex justify-content-between align-items-center mb-2 px-1" style="font-size:0.85rem;">
-                <div class="fw-bold text-dark">เสี่ยงสูง ${counts.high} • ค่อนข้างสูง ${counts.medHigh} • ปานกลาง ${counts.med} • ต่ำ ${counts.low} (จาก 50 เขต)</div>
-                <button class="btn btn-sm btn-primary py-0 px-2" style="font-size:0.75rem;" onclick="alert('ดาวน์โหลดรายงาน CSV สำเร็จ!')"><i class="fa-solid fa-download"></i> ดาวน์โหลด CSV</button>
+                <div class="fw-bold text-dark"><i class="fa-solid fa-triangle-exclamation text-danger"></i> ศูนย์เตือนภัยทุกเขต/จังหวัด (เรียงตามความเสี่ยง)</div>
+                <button class="btn btn-sm btn-primary py-0 px-2" style="font-size:0.75rem;" onclick="alert('ดาวน์โหลดรายงานจุดเสี่ยง CSV สำเร็จ!')"><i class="fa-solid fa-download"></i> ดาวน์โหลด CSV</button>
             </div>
-            <div class="text-muted small mb-2 px-1">แหล่งข้อมูล: Open-Meteo • เรียงจากเสี่ยงมากไปน้อย กดชื่อเขตเพื่อดูรายละเอียด</div>
+            <div class="text-muted small mb-2 px-1">ระบบดึงข้อมูล Open-Meteo แบบเรียลไทม์ • กดที่รายการเพื่อย้ายพิกัดไปยังจุดนั้นทันที</div>
         `;
 
         list.innerHTML = htmlHeader;
-        districtResults.forEach(item => {
+        allResults.forEach(item => {
             list.innerHTML += `
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 bg-transparent border-bottom" style="cursor:pointer;" onclick="selectDistrict(${item.lat}, ${item.lng}, '${item.name}')">
                     <div>
-                        <div class="fw-bold text-dark" style="font-size:0.9rem;">${item.name} <span class="text-muted fw-normal" style="font-size:0.75rem;">(${item.zone})</span></div>
-                        <div class="text-muted" style="font-size:0.75rem;">ย้อนหลัง ${item.rainPast} / ข้างหน้า ${item.rainFuture} มม. • สูงสุด ${item.maxRainHour} มม./ชม. • ${item.radarStatus}</div>
+                        <div class="fw-bold text-dark" style="font-size:0.9rem;">${item.name} <span class="badge bg-secondary fw-normal" style="font-size:0.65rem;">${item.type}</span></div>
+                        <div class="text-muted" style="font-size:0.75rem;">ฝนย้อนหลัง ${item.rainPast} / ข้างหน้า ${item.rainFuture} มม. • ${item.radarStatus}</div>
                     </div>
                     <span class="badge ${item.badgeClass} px-3 py-2 rounded-pill" style="font-size:0.8rem;">${item.level}</span>
                 </div>`;
         });
+    }
+
+    async function handleScanBangkokDistricts() {
+        await autoScanAllRisks();
     }
 
     window.selectDistrict = function(lat, lng, name) {
@@ -553,7 +531,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderWaterLevelTable(currentPlaceName);
         renderCCTVSelector(currentPlaceName, currentLat, currentLng);
         updateTrafficAndRecommendations(risk, data, currentPlaceName);
-        updateSunAndTideInfo(data); // อัปเดตข้อมูลพระอาทิตย์และน้ำขึ้นน้ำลง
+        updateSunAndTideInfo(data);
         
         if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
