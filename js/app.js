@@ -27,10 +27,10 @@ const LocationService = {
         { name: "จุดเสี่ยงน้ำท่วม: ถนนพหลโยธิน (แยกเกษตร)", lat: 13.8402, lng: 100.5724 }
     ],
     cctvCameras: [
-        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" },
-        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" },
-        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" },
-        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://bangkoktraffic.com/" }
+        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" },
+        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" },
+        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" },
+        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" }
     ],
     waterCanals: [
         { name: "คลองแสนแสบ (สะพานผ่านฟ้า)", current: "+0.45 ม.", bank: "+1.20 ม.", status: "ปกติ" },
