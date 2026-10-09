@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบตรวจฝน น้ำท่วม & PM2.5 อัจฉริยะ</title>
+    <title>ศูนย์บัญชาการภัยพิบัติ & จราจรอัจฉริยะ 4 มิติ</title>
     <!-- PWA & Meta -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d6efd">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ตรวจฝน">
+    <meta name="apple-mobile-web-app-title" content="Smart Command">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1163/1163624.png">
     
-    <!-- Bootstrap 5 & FontAwesome Icons -->
+    <!-- Bootstrap 5 & FontAwesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Leaflet CSS -->
@@ -26,8 +26,8 @@
         <!-- Header -->
         <header class="d-flex justify-content-between align-items-center mb-3 px-1">
             <div>
-                <h5 class="fw-bold text-primary mb-0"><i class="fa-solid fa-cloud-rain"></i> ThaiWeather & Flood AI</h5>
-                <small class="text-muted" style="font-size: 0.75rem;">ระบบเตือนภัยสภาพอากาศและจราจรอัจฉริยะ</small>
+                <h5 class="fw-bold text-primary mb-0"><i class="fa-solid fa-shield-halved"></i> Thai Command Center</h5>
+                <small class="text-muted" style="font-size: 0.75rem;">ระบบอัจฉริยะ 4 มิติ: ฝน น้ำท่วม CCTV จราจร</small>
             </div>
             <div class="d-flex gap-1">
                 <button id="btnToggleDark" class="btn btn-sm btn-outline-secondary rounded-circle" style="width:35px;height:35px;" title="โหมดมืด"><i class="fa-solid fa-moon"></i></button>
@@ -38,7 +38,7 @@
         <div id="pwaInstallBanner" class="card shadow-sm p-2 mb-3 border-0 bg-primary text-white rounded-4" style="display:none;">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="small ps-1">
-                    <strong><i class="fa-solid fa-mobile-screen"></i> ติดตั้งแอปนี้ลงมือถือ!</strong><br>
+                    <strong><i class="fa-solid fa-mobile-screen"></i> ติดตั้งแอปสั่งการนี้ลงมือถือ!</strong><br>
                     <span style="font-size: 0.75rem;">เปิดใช้งานรวดเร็ว ไม่ต้องเข้าผ่านเบราว์เซอร์</span>
                 </div>
                 <button id="btnInstallPWA" class="btn btn-light btn-sm text-primary fw-bold px-3 rounded-pill shadow-sm">ติดตั้ง</button>
@@ -49,11 +49,9 @@
         <div class="card shadow-sm p-3 mb-3 border-0 rounded-4">
             <div class="input-group mb-2">
                 <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
-                <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="ค้นหาเขต, จังหวัด, ถนน เช่น ลาดพร้าว">
+                <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="ค้นหาเขต, จังหวัด, ถนน เช่น รัชดาภิเษก">
                 <button class="btn btn-primary px-3" id="btnSearch" type="button">ค้นหา</button>
             </div>
-            
-            <!-- Favorite Chips Container -->
             <div class="d-flex align-items-center gap-1 overflow-auto pb-1" id="favoriteChips" style="font-size: 0.8rem;">
                 <span class="text-muted small me-1"><i class="fa-solid fa-star text-warning"></i> โปรด:</span>
             </div>
@@ -62,7 +60,7 @@
         <!-- Location Controls & GPS -->
         <div class="card shadow-sm p-3 mb-3 border-0 rounded-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-bold text-secondary small"><i class="fa-solid fa-location-crosshairs"></i> พิกัด & พื้นที่ตรวจวัด</span>
+                <span class="fw-bold text-secondary small"><i class="fa-solid fa-location-crosshairs"></i> พิกัด & พื้นที่บัญชาการ</span>
                 <button id="btnAddFavorite" class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size: 0.75rem;"><i class="fa-solid fa-star"></i> บันทึกที่นี่</button>
             </div>
             <div class="row g-2">
@@ -78,7 +76,7 @@
                     <button id="btnScan" class="btn btn-outline-primary btn-sm w-100 rounded-3"><i class="fa-solid fa-radar"></i> สแกนความเสี่ยงทั่วไทย</button>
                 </div>
             </div>
-            <div class="small text-muted mt-2 text-end" id="refreshStatusText" style="font-size: 0.75rem;">พร้อมใช้งาน</div>
+            <div class="small text-muted mt-2 text-end" id="refreshStatusText" style="font-size: 0.75rem;">ระบบพร้อมทำงาน (Fallback API Active)</div>
         </div>
 
         <!-- Alert Notification Box -->
@@ -86,29 +84,28 @@
             <div class="d-flex align-items-center">
                 <i class="fa-solid fa-triangle-exclamation fs-4 me-2"></i>
                 <div>
-                    <strong id="alertTitle">🚨 เตือนภัย!</strong><br>
-                    <span id="alertMessage" class="small">พบกลุ่มฝนหนักหรือเสี่ยงน้ำท่วมขัง</span>
+                    <strong id="alertTitle">🚨 แจ้งเตือนภัยพิบัติระดับวิกฤต!</strong><br>
+                    <span id="alertMessage" class="small">พบฝนตกสะสมเกิน 80 มม. / เสี่ยงน้ำท่วมฉับพลัน</span>
                 </div>
             </div>
         </div>
 
-        <!-- Weather Hero Card (Main Temp & AQI) - FIXED TEXT COLOR -->
+        <!-- 1. Weather Hero Card (Part 1: ฝนและสภาพอากาศ) -->
         <div class="card shadow-sm p-3 mb-3 border-0 rounded-4 text-white" style="background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <span class="badge bg-white text-primary mb-2 px-2 py-1 fw-bold" id="currentPlaceBadge" style="font-size: 0.8rem;">กรุงเทพมหานคร</span>
-                    <h1 class="fw-bold display-4 mb-0 text-white" id="valTemp" style="text-shadow: 0 2px 4px rgba(0,0,0,0.15);">--°C</h1>
+                    <h1 class="fw-bold display-4 mb-0 text-white" id="valTemp">--°C</h1>
                     <div class="small mt-1 text-white fw-semibold" id="valApparentTemp">รู้สึกเหมือน: --°C</div>
                 </div>
                 <div class="text-end">
                     <div class="badge bg-dark bg-opacity-50 text-warning mb-1 fw-bold px-2 py-1" id="valPM25Badge">PM2.5: --</div>
-                    <div class="small text-white fw-medium" id="valWeatherDesc">กำลังโหลด...</div>
+                    <div class="small text-white fw-medium" id="valWeatherDesc">กำลังเชื่อมต่อ API...</div>
                 </div>
             </div>
             
             <hr class="my-3 border-white opacity-50">
 
-            <!-- Sub Weather Grid -->
             <div class="row g-2 text-center" style="font-size: 0.85rem;">
                 <div class="col-4">
                     <div class="bg-white bg-opacity-25 p-2 rounded-3 text-white">
@@ -120,7 +117,7 @@
                 <div class="col-4">
                     <div class="bg-white bg-opacity-25 p-2 rounded-3 text-white">
                         <i class="fa-solid fa-cloud-rain text-white mb-1"></i>
-                        <div class="small text-white fw-medium">ฝนตก</div>
+                        <div class="small text-white fw-medium">ฝนสะสม</div>
                         <div class="fw-bold text-white" id="valRain">-- มม.</div>
                     </div>
                 </div>
@@ -134,26 +131,70 @@
             </div>
         </div>
 
-        <!-- Quick Emergency & Traffic Tools -->
-        <div class="card shadow-sm p-3 mb-3 border-0 rounded-4">
-            <div class="fw-bold text-secondary mb-2 small"><i class="fa-solid fa-toolbox"></i> เครื่องมือเดินทาง & ฉุกเฉิน</div>
+        <!-- 2. Water Level & Dam / Tide Monitor (Part 2: ระดับน้ำและดาวเทียม) -->
+        <div class="card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold text-dark small"><i class="fa-solid fa-water text-info"></i> ตรวจสอบระดับน้ำ & เขื่อน (BMA/ThaiWater)</span>
+                <span class="badge bg-info text-dark" id="tideStatusBadge">น้ำทะเลหนุน: ปกติ</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-borderless small mb-0 align-middle">
+                    <thead class="text-muted border-bottom">
+                        <tr>
+                            <th>จุดตรวจวัดคลอง</th>
+                            <th>ระดับปัจจุบัน</th>
+                            <th>ระดับตลิ่ง</th>
+                            <th>สถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waterLevelTableBody">
+                        <tr><td colspan="4" class="text-center text-muted py-2">กำลังซิงค์ข้อมูลระดับน้ำ...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. CCTV & AI Vision Analysis (Part 3: กล้อง CCTV และ AI วิเคราะห์ภาพ) -->
+        <div class="card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold text-dark small"><i class="fa-solid fa-camera-retro text-danger"></i> CCTV & AI วิเคราะห์น้ำท่วมถนน</span>
+                <span class="badge bg-success" id="aiVisionStatus">AI พร้อมทำงาน (PDPA Active)</span>
+            </div>
+            <div class="p-2 bg-light rounded-3 mb-2 text-center position-relative overflow-hidden" style="min-height: 140px; background: #111 !important;">
+                <div id="aiVisionDisplay" class="text-white small py-3">
+                    <i class="fa-solid fa-video-slash text-warning fs-3 mb-1"></i><br>
+                    เลือกจุดกล้อง CCTV ด้านล่างเพื่อเริ่ม AI Computer Vision ตรวจจับระดับน้ำ
+                </div>
+            </div>
+            <div class="d-flex gap-1 overflow-auto pb-1" id="cctvSelectorChips">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+        <!-- 4. Traffic Intelligence & Navigation (Part 4: การจราจรและความเร็ว) -->
+        <div class="card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white">
+            <div class="fw-bold text-dark mb-2 small"><i class="fa-solid fa-traffic-light text-warning"></i> ความเร็วจราจร & เส้นทางเลี่ยงอัจฉริยะ</div>
+            <div class="row g-2 mb-2" id="trafficSpeedGrid">
+                <div class="col-6">
+                    <div class="p-2 bg-light rounded-3 border">
+                        <div class="text-muted" style="font-size:0.75rem;">ความเร็วเฉลี่ยถนนหลัก</div>
+                        <div class="fw-bold text-success" id="valTrafficSpeed">45 กม./ชม. (คล่องตัว)</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-2 bg-light rounded-3 border">
+                        <div class="text-muted" style="font-size:0.75rem;">คำแนะนำเส้นทาง</div>
+                        <div class="fw-bold text-primary" id="valTrafficAdvice">ใช้ทางด่วนหลีกเลี่ยงโซนฝน</div>
+                    </div>
+                </div>
+            </div>
             <div class="row g-2">
                 <div class="col-6">
                     <a href="https://traffic.longdo.com/" target="_blank" class="btn btn-warning btn-sm w-100 fw-bold text-dark rounded-3">
-                        <i class="fa-solid fa-traffic-light"></i> แผนที่รถติดสด
+                        <i class="fa-solid fa-map"></i> แผนที่รถติดสด
                     </a>
                 </div>
                 <div class="col-6">
-                    <a href="https://www.bangkoktraffic.com/" target="_blank" class="btn btn-outline-dark btn-sm w-100 rounded-3">
-                        <i class="fa-solid fa-video"></i> กล้อง CCTV กทม.
-                    </a>
-                </div>
-                <div class="col-6 mt-2">
-                    <a href="https://dds.bangkok.go.th/" target="_blank" class="btn btn-outline-info btn-sm w-100 rounded-3">
-                        <i class="fa-solid fa-water"></i> ระดับน้ำ คลอง
-                    </a>
-                </div>
-                <div class="col-6 mt-2">
                     <a href="tel:1784" class="btn btn-danger btn-sm w-100 fw-bold rounded-3">
                         <i class="fa-solid fa-phone-volume"></i> สายด่วน 1784
                     </a>
@@ -161,13 +202,13 @@
             </div>
         </div>
 
-        <!-- AI Weather Analysis & Travel Advice -->
+        <!-- AI Comprehensive Decision Support -->
         <div class="card shadow-sm p-3 mb-3 border-0 rounded-4 bg-white border-start border-4 border-primary">
             <div class="d-flex align-items-center mb-1">
                 <i class="fa-solid fa-robot text-primary me-2 fs-5"></i>
-                <span class="fw-bold text-primary small">AI วิเคราะห์ความปลอดภัยการเดินทาง</span>
+                <span class="fw-bold text-primary small">AI Command Decision (ประมวลผล 4 มิติ)</span>
             </div>
-            <p id="aiAnalysisResult" class="mb-0 text-secondary small">กำลังประมวลผลสภาพอากาศและเส้นทาง...</p>
+            <p id="aiAnalysisResult" class="mb-0 text-secondary small">กำลังสังเคราะห์ข้อมูลฝน ระดับน้ำ กล้อง CCTV และจราจร...</p>
         </div>
 
         <!-- Rain Radar Map & Controls -->
@@ -176,20 +217,17 @@
                 <span class="small"><i class="fa-solid fa-map-location-dot text-primary"></i> เรดาร์ฝนสด & จุดเสี่ยงน้ำท่วม</span>
                 <span class="badge bg-primary" id="radarTimeLabel">--:-- น.</span>
             </div>
-            <div id="map" style="height: 320px; width: 100%;"></div>
+            <div id="map" style="height: 300px; width: 100%;"></div>
             
-            <!-- Radar Controls & Opacity Slider -->
             <div class="p-3 bg-light border-top">
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <button id="btnPlayRadar" class="btn btn-primary btn-sm px-3 rounded-pill"><i class="fa-solid fa-play"></i> เล่น</button>
                     <input type="range" class="form-range flex-grow-1" id="radarTimeline" min="0" max="0" value="0">
                 </div>
-                <!-- Opacity Slider -->
                 <div class="d-flex align-items-center gap-2 small text-muted">
                     <span>ความโปร่งใสเรดาร์:</span>
                     <input type="range" class="form-range" id="radarOpacity" min="0.1" max="1.0" step="0.1" value="0.6" style="width: 120px;">
                 </div>
-                <div class="small text-muted mt-1" id="radarNotice" style="font-size: 0.75rem;">พร้อมดึงข้อมูลเรดาร์เรียลไทม์</div>
             </div>
         </div>
 
@@ -210,7 +248,7 @@
         <!-- Province Risk List -->
         <div class="card shadow-sm mb-3 border-0 rounded-4">
             <div class="card-header bg-white fw-bold py-2 small"><i class="fa-solid fa-list-check text-primary"></i> สถิติความเสี่ยงภัยทั่วประเทศ</div>
-            <div class="list-group list-group-flush scrollable-list" id="provinceRiskList" style="max-height: 250px; overflow-y: auto;">
+            <div class="list-group list-group-flush scrollable-list" id="provinceRiskList" style="max-height: 220px; overflow-y: auto;">
                 <div class="text-center p-3 text-muted small">กดปุ่ม "สแกนความเสี่ยงทั่วไทย" ด้านบนเพื่อดูข้อมูล</div>
             </div>
         </div>
@@ -218,7 +256,7 @@
         <!-- Share & Footer -->
         <div class="d-grid gap-2 mb-4">
             <button id="btnShareLine" class="btn btn-success fw-bold py-2 rounded-pill shadow-sm"><i class="fa-brands fa-line"></i> แชร์รายงานเข้า LINE</button>
-            <div class="text-center text-muted small mt-2" style="font-size: 0.75rem;">แหล่งข้อมูล: Open-Meteo, RainViewer & BMA · อัปเดตอัตโนมัติ</div>
+            <div class="text-center text-muted small mt-2" style="font-size: 0.75rem;">Smart Command Center 4 มิติ · อัปเดตอัตโนมัติ</div>
         </div>
     </div>
 
