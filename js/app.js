@@ -66,21 +66,12 @@ const WeatherService = {
             const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day,weather_code&daily=sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
             const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,european_aqi&timezone=Asia%2FBangkok`;
             
-            // Timeout Fallback Mechanism
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-            const [wRes, aqRes] = await Promise.all([
-                fetch(weatherUrl, { signal: controller.signal }),
-                fetch(aqUrl, { signal: controller.signal })
-            ]);
-            clearTimeout(timeoutId);
-
+            const [wRes, aqRes] = await Promise.all([fetch(weatherUrl), fetch(aqUrl)]);
             const wData = await wRes.json();
             const aqData = await aqRes.json();
-            return { ...wData, air_quality: aqData?.current || { pm2_5: 0, european_aqi: 0 }, fallback: false };
+
+            return { ...wData, air_quality: aqData?.current || { pm2_5: 0 }, fallback: false };
         } catch (e) {
-            // Fallback Mock Data if Timeout or Network error
             return {
                 current: { temperature_2m: 28.5, apparent_temperature: 32.0, relative_humidity_2m: 85, precipitation: 12.5, wind_speed_10m: 15, visibility: 5000 },
                 hourly: { precipitation: [5, 10, 25, 40, 15, 5], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
@@ -104,6 +95,9 @@ const RadarService = {
 
     initMap(id, lat, lng) {
         if (this.map) return;
+        const container = document.getElementById(id);
+        if (!container) return;
+        
         this.map = L.map(id, { minZoom: 5, maxZoom: 18 }).setView([lat, lng], 10);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
@@ -122,6 +116,7 @@ const RadarService = {
     },
 
     renderFloodHotspots() {
+        if (!this.map) return;
         LocationService.floodHotspots.forEach(spot => {
             L.circle([spot.lat, spot.lng], {
                 color: '#ff6b00',
@@ -133,6 +128,7 @@ const RadarService = {
     },
 
     renderCCTVMarkers() {
+        if (!this.map) return;
         LocationService.cctvCameras.forEach(cam => {
             const camIcon = L.divIcon({
                 className: 'custom-div-icon',
@@ -189,13 +185,12 @@ const RadarService = {
             if (this.radarLayers.length > 0) this.showFrame(this.radarLayers.length - 1);
             return this.timestamps;
         } catch (e) {
-            document.getElementById('radarNotice')?.innerText = "เรดาร์เชื่อมต่อสำรองสำเร็จ";
             return [];
         }
     },
 
     showFrame(index) {
-        if (index < 0 || index >= this.radarLayers.length) return;
+        if (!this.map || index < 0 || index >= this.radarLayers.length) return;
         this.radarLayers.forEach((layer, i) => {
             if (i === index) { if (!this.map.hasLayer(layer)) this.map.addLayer(layer); }
             else { if (this.map.hasLayer(layer)) this.map.removeLayer(layer); }
@@ -227,7 +222,6 @@ const RiskEngine = {
         const futureRain = (w.hourly?.precipitation || []).slice(2, 5).reduce((a, b) => a + b, 0);
         const totalRainAccumulated = rainCurr + futureRain;
 
-        // Rule: ฝนตกสะสมเกิน 80 มม. = เสี่ยงสูงวิกฤต
         let score = Math.round(Math.min((totalRainAccumulated * 1.2), 100));
         let level = 'ต่ำ', badgeClass = 'bg-success';
         if (totalRainAccumulated > 80 || score > 75) { level = 'สูงวิกฤต'; badgeClass = 'bg-danger'; }
@@ -239,27 +233,10 @@ const RiskEngine = {
     }
 };
 
-function playSirenSound() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.5);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.6);
-    } catch (e) { console.log("Audio not supported"); }
-}
-
 // --- Main Application Loop ---
 document.addEventListener('DOMContentLoaded', async () => {
     let currentLat = 13.7563, currentLng = 100.5018, currentPlaceName = "กรุงเทพมหานคร";
     let chartInstance = null, isPlaying = false, scannedDataStore = [];
-    let deferredPrompt = null;
 
     let favorites = JSON.parse(localStorage.getItem('fav_locations') || '["กรุงเทพมหานคร", "เชียงใหม่", "ขอนแก่น"]');
     renderFavorites();
@@ -292,26 +269,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    document.getElementById('btnAddFavorite').onclick = () => {
-        if (!favorites.includes(currentPlaceName)) {
-            favorites.push(currentPlaceName);
-            localStorage.setItem('fav_locations', JSON.stringify(favorites));
-            renderFavorites();
-            alert(`บันทึก "${currentPlaceName}" ลงในรายการโปรดเรียบร้อย!`);
-        }
-    };
+    const addFavBtn = document.getElementById('btnAddFavorite');
+    if (addFavBtn) {
+        addFavBtn.onclick = () => {
+            if (!favorites.includes(currentPlaceName)) {
+                favorites.push(currentPlaceName);
+                localStorage.setItem('fav_locations', JSON.stringify(favorites));
+                renderFavorites();
+                alert(`บันทึก "${currentPlaceName}" ลงในรายการโปรดเรียบร้อย!`);
+            }
+        };
+    }
 
-    document.getElementById('radarOpacity').oninput = (e) => {
-        RadarService.setOpacity(parseFloat(e.target.value));
-    };
-
-    const btnDark = document.getElementById('btnToggleDark');
-    if (btnDark) {
-        btnDark.onclick = () => {
-            document.body.classList.toggle('bg-dark');
-            document.body.classList.toggle('text-white');
-            document.querySelectorAll('.card').forEach(c => c.classList.toggle('bg-secondary'));
-            document.querySelectorAll('.card').forEach(c => c.classList.toggle('text-white'));
+    const opacitySlider = document.getElementById('radarOpacity');
+    if (opacitySlider) {
+        opacitySlider.oninput = (e) => {
+            RadarService.setOpacity(parseFloat(e.target.value));
         };
     }
 
@@ -320,30 +293,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderWaterLevelTable();
     renderCCTVSelector();
 
-    document.getElementById('btnGPS').onclick = async () => {
-        try {
-            document.getElementById('refreshStatusText').innerText = "กำลังดึง GPS...";
-            const pos = await LocationService.getCurrentGPS();
-            currentLat = pos.lat; currentLng = pos.lng;
-            currentPlaceName = "ตำแหน่งปัจจุบันของฉัน";
-            RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
-            refreshAllData();
-        } catch (e) { alert("GPS ไม่พร้อมใช้งาน: " + e.message); }
-    };
+    const gpsBtn = document.getElementById('btnGPS');
+    if (gpsBtn) {
+        gpsBtn.onclick = async () => {
+            try {
+                document.getElementById('refreshStatusText').innerText = "กำลังดึง GPS...";
+                const pos = await LocationService.getCurrentGPS();
+                currentLat = pos.lat; currentLng = pos.lng;
+                currentPlaceName = "ตำแหน่งปัจจุบันของฉัน";
+                RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
+                refreshAllData();
+            } catch (e) { alert("GPS ไม่พร้อมใช้งาน: " + e.message); }
+        };
+    }
 
-    document.getElementById('btnSearch').onclick = async () => {
-        const q = document.getElementById('searchInput').value.trim();
-        if (!q) return;
-        document.getElementById('refreshStatusText').innerText = "กำลังค้นหา...";
-        const res = await LocationService.searchLocation(q);
-        if (res) {
-            currentLat = res.lat; currentLng = res.lng; currentPlaceName = res.name;
-            RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
-            refreshAllData();
-        } else { alert("ไม่พบสถานที่"); }
-    };
+    const searchBtn = document.getElementById('btnSearch');
+    if (searchBtn) {
+        searchBtn.onclick = async () => {
+            const q = document.getElementById('searchInput').value.trim();
+            if (!q) return;
+            document.getElementById('refreshStatusText').innerText = "กำลังค้นหา...";
+            const res = await LocationService.searchLocation(q);
+            if (res) {
+                currentLat = res.lat; currentLng = res.lng; currentPlaceName = res.name;
+                RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
+                refreshAllData();
+            } else { alert("ไม่พบสถานที่"); }
+        };
+    }
 
-    document.getElementById('btnScan').onclick = handleScan;
+    const scanBtn = document.getElementById('btnScan');
+    if (scanBtn) scanBtn.onclick = handleScan;
 
     const playBtn = document.getElementById('btnPlayRadar');
     if (playBtn) {
@@ -362,12 +342,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    document.getElementById('btnShareLine').onclick = () => {
-        const temp = document.getElementById('valTemp').innerText;
-        const rain = document.getElementById('valRain').innerText;
-        const msg = `🚨 ศูนย์บัญชาการภัยพิบัติ: ${currentPlaceName}\n🌡️ อุณหภูมิ: ${temp}\n🌧️ ฝนสะสม: ${rain}\n⏰ เวลา: ${new Date().toLocaleTimeString('th-TH')} น.`;
-        window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank');
-    };
+    const shareBtn = document.getElementById('btnShareLine');
+    if (shareBtn) {
+        shareBtn.onclick = () => {
+            const temp = document.getElementById('valTemp').innerText;
+            const rain = document.getElementById('valRain').innerText;
+            const msg = `🚨 ศูนย์บัญชาการภัยพิบัติ: ${currentPlaceName}\n🌡️ อุณหภูมิ: ${temp}\n🌧️ ฝนสะสม: ${rain}\n⏰ เวลา: ${new Date().toLocaleTimeString('th-TH')} น.`;
+            window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank');
+        };
+    }
 
     function renderWaterLevelTable() {
         const tbody = document.getElementById('waterLevelTableBody');
@@ -396,56 +379,75 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerHTML = `<i class="fa-solid fa-video"></i> ${cam.name}`;
             btn.onclick = () => {
                 const display = document.getElementById('aiVisionDisplay');
-                display.innerHTML = `
-                    <div class="text-start p-2" style="font-size:0.8rem;">
-                        <div class="text-warning fw-bold mb-1"><i class="fa-solid fa-microchip"></i> AI Vision Analysis: ${cam.name}</div>
-                        <div>🌊 ระดับน้ำผิวจราจร: <span class="text-info fw-bold">${cam.waterLevel}</span></div>
-                        <div>🔍 สถานะ AI: <span class="text-success">${cam.status}</span></div>
-                        <div>🛡️ ระบบ PDPA: <span class="text-light">${cam.pdpa}</span></div>
-                    </div>`;
+                if (display) {
+                    display.innerHTML = `
+                        <div class="text-start p-2" style="font-size:0.8rem;">
+                            <div class="text-warning fw-bold mb-1"><i class="fa-solid fa-microchip"></i> AI Vision Analysis: ${cam.name}</div>
+                            <div>🌊 ระดับน้ำผิวจราจร: <span class="text-info fw-bold">${cam.waterLevel}</span></div>
+                            <div>🔍 สถานะ AI: <span class="text-success">${cam.status}</span></div>
+                            <div>🛡️ ระบบ PDPA: <span class="text-light">${cam.pdpa}</span></div>
+                        </div>`;
+                }
             };
             container.appendChild(btn);
         });
     }
 
     async function refreshAllData() {
-        document.getElementById('refreshStatusText').innerText = "กำลังดึงข้อมูล 4 มิติ...";
+        const statusText = document.getElementById('refreshStatusText');
+        if (statusText) statusText.innerText = "กำลังดึงข้อมูล 4 มิติ...";
+        
         const data = await WeatherService.fetchWeather(currentLat, currentLng);
         if (!data || !data.current) {
-            document.getElementById('refreshStatusText').innerText = "ดึงข้อมูลล้มเหลว";
+            if (statusText) statusText.innerText = "ดึงข้อมูลล้มเหลว";
             return;
         }
 
-        document.getElementById('currentPlaceBadge').innerText = currentPlaceName;
-        document.getElementById('valTemp').innerText = `${data.current.temperature_2m}°C`;
-        document.getElementById('valApparentTemp').innerText = `รู้สึกเหมือน: ${data.current.apparent_temperature}°C`;
-        document.getElementById('valHumidity').innerText = `${data.current.relative_humidity_2m}%`;
-        document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
+        const placeBadge = document.getElementById('currentPlaceBadge');
+        if (placeBadge) placeBadge.innerText = currentPlaceName;
+
+        const valTemp = document.getElementById('valTemp');
+        if (valTemp) valTemp.innerText = `${data.current.temperature_2m}°C`;
+
+        const valApp = document.getElementById('valApparentTemp');
+        if (valApp) valApp.innerText = `รู้สึกเหมือน: ${data.current.apparent_temperature}°C`;
+
+        const valHum = document.getElementById('valHumidity');
+        if (valHum) valHum.innerText = `${data.current.relative_humidity_2m}%`;
+
+        const valRain = document.getElementById('valRain');
+        if (valRain) valRain.innerText = `${data.current.precipitation} มม.`;
         
         const visKm = data.current.visibility ? (data.current.visibility / 1000).toFixed(1) : "N/A";
-        document.getElementById('valVisibility').innerText = `${visKm} กม.`;
-        document.getElementById('valPM25Badge').innerText = `PM2.5: ${data.air_quality?.pm2_5 || 0} µg/m³`;
+        const valVis = document.getElementById('valVisibility');
+        if (valVis) valVis.innerText = `${visKm} กม.`;
+
+        const valPm = document.getElementById('valPM25Badge');
+        if (valPm) valPm.innerText = `PM2.5: ${data.air_quality?.pm2_5 || 0} µg/m³`;
 
         const risk = RiskEngine.calculateRisk(data);
         const alertBox = document.getElementById('alertBox');
         
         if (risk.score > 75 || risk.floodRisk) {
-            alertBox.classList.remove('d-none');
-            document.getElementById('alertMessage').innerText = `วิกฤต! ปริมาณฝนสะสมและน้ำท่วมขังสูงในพื้นที่ ${currentPlaceName} (${risk.score} คะแนน)`;
-            playSirenSound();
-            if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 400]);
+            if (alertBox) {
+                alertBox.classList.remove('d-none');
+                const alertMsg = document.getElementById('alertMessage');
+                if (alertMsg) alertMsg.innerText = `วิกฤต! ปริมาณฝนสะสมสูงในพื้นที่ ${currentPlaceName} (${risk.score} คะแนน)`;
+            }
         } else {
-            alertBox.classList.add('d-none');
+            if (alertBox) alertBox.classList.add('d-none');
         }
 
         let aiMsg = `พื้นที่ ${currentPlaceName}: ระบบประมวลผล 4 มิติสมบูรณ์ `;
-        if (risk.score > 75) aiMsg += `🚨 แจ้งเตือนภัยระดับวิกฤต ฝนตกหนักสะสม น้ำในคลองใกล้ล้นตลิ่ง แนะนำเลี่ยงเส้นทางทันที `;
+        if (risk.score > 75) aiMsg += `🚨 แจ้งเตือนภัยระดับวิกฤต ฝนตกหนักสะสม น้ำใกล้ล้นตลิ่ง แนะนำเลี่ยงเส้นทางทันที `;
         else aiMsg += `✅ สภาพอากาศและระดับน้ำอยู่ในเกณฑ์ปลอดภัย จราจรคล่องตัว`;
-        document.getElementById('aiAnalysisResult').innerText = aiMsg;
+        
+        const aiResult = document.getElementById('aiAnalysisResult');
+        if (aiResult) aiResult.innerText = aiMsg;
 
         render7DayForecast(data);
         renderChart(data);
-        document.getElementById('refreshStatusText').innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
+        if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
     }
 
     function render7DayForecast(data) {
@@ -475,6 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function handleScan() {
         const list = document.getElementById('provinceRiskList');
+        if (!list) return;
         list.innerHTML = `<div class="text-center p-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> กำลังสแกนความเสี่ยงทั่วประเทศ...</div>`;
         scannedDataStore = [];
         
