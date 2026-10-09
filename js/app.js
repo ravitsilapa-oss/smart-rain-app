@@ -11,7 +11,7 @@ const ApiCache = {
     set(key, val) { this.data[key] = { time: Date.now(), val }; },
     get(key) {
         const item = this.data[key];
-        if (item && (Date.now() - item.time < 180000)) return item.val; // Cache 3 นาที
+        if (item && (Date.now() - item.time < 180000)) return item.val;
         return null;
     }
 };
@@ -127,9 +127,8 @@ const LocationService = {
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3500);
+            setTimeout(() => controller.abort(), 3500);
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Thailand')}`, { signal: controller.signal });
-            clearTimeout(timeoutId);
             const data = await res.json();
             if (data && data.length > 0) {
                 const result = { name: data[0].display_name.split(',')[0], lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
@@ -189,10 +188,8 @@ const WeatherService = {
             const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day,weather_code&daily=sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&hourly=precipitation_probability,precipitation&timezone=Asia%2FBangkok`;
             
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            setTimeout(() => controller.abort(), 4000);
             const res = await fetch(weatherUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
             const data = await res.json();
             ApiCache.set(cacheKey, data);
             return data;
@@ -206,7 +203,7 @@ const WeatherService = {
             }
             return {
                 current: { temperature_2m: 29.0, apparent_temperature: 33.5, relative_humidity_2m: 80, precipitation: 0.0, visibility: 10000 },
-                hourly: { precipitation: [0, 0, 0, 0, 0, 0], precipitation_probability: [10, 20, 35, 50, 25, 10], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
+                hourly: { precipitation: [0.1, 0.3, 0.0, 0.5, 1.2, 0.4], precipitation_probability: [10, 20, 35, 50, 25, 10], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
                 daily: { temperature_2m_max: [34,33,32,33,35,34,33], temperature_2m_min: [25,25,24,25,26,25,25], precipitation_probability_max: mockProb, sunrise: mockSunrise, sunset: mockSunset, time: mockDates },
                 fallback: true
             };
@@ -322,7 +319,7 @@ const RiskEngine = {
     }
 };
 
-// --- Main Application Loop with Parallel High-Speed Loading ---
+// --- Main Application Loop with Dynamic Real-Time Chart ---
 document.addEventListener('DOMContentLoaded', async () => {
     let currentLat = 13.7563, currentLng = 100.5018, currentPlaceName = "กรุงเทพมหานคร";
     let chartInstance = null, isPlaying = false;
@@ -588,7 +585,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // สแกนความเสี่ยงทุกจังหวัดแบบขนานพร้อมกัน (Parallel) เร็วขึ้น 5 เท่า
     async function autoScanAllRisks() {
         const list = document.getElementById('provinceRiskList');
         if (!list) return;
@@ -599,7 +595,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...LocationService.bangkokDistricts.map(d => ({ name: `${d.name} (${d.zone})`, type: 'เขต กทม.', lat: d.lat, lng: d.lng }))
         ];
 
-        // ยิงคำขอทั้งหมดพร้อมกันด้วย Promise.all (รวดเร็วมาก)
         const promises = targets.map(async t => {
             const w = await WeatherService.fetchWeather(t.lat, t.lng);
             const r = RiskEngine.calculateRisk(w);
@@ -641,12 +636,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // ฟังก์ชันหลักโหลดข้อมูลด้วย Parallel Request (เร็วที่สุด เสถียรที่สุด)
     async function refreshAllData() {
         const statusText = document.getElementById('refreshStatusText');
         if (statusText) statusText.innerText = "กำลังซิงค์ข้อมูลความเร็วสูง...";
         
-        // ยิงคำขออากาศและแผ่นดินไหวพร้อมกัน
         const [data, pmVal] = await Promise.all([
             WeatherService.fetchWeather(currentLat, currentLng),
             DisasterService.fetchLiveAirQuality(currentLat, currentLng)
@@ -684,7 +677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('aiAnalysisResult').innerText = aiMsg;
 
         render7DayForecast(data);
-        renderChart(data);
+        renderChart(data); // กราฟจะอัปเดตข้อมูลและขยับตามเวลาจริงทันที
         renderWaterAndDamsTable(currentPlaceName);
         renderCCTVSelector(currentPlaceName, currentLat, currentLng);
         updateTrafficAndRecommendations(risk, data, currentPlaceName);
@@ -735,27 +728,55 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // ฟังก์ชันเรนเดอร์กราฟปริมาณฝนรายชั่วโมงแบบไดนามิกตามเวลาปัจจุบัน
     function renderChart(wData) {
         const ctxElement = document.getElementById('forecastChart');
         if (!ctxElement) return;
         const ctx = ctxElement.getContext('2d');
-        const labels = (wData.hourly?.time || []).slice(0, 6).map(t => t.split('T')[1]);
-        const rain = (wData.hourly?.precipitation || []).slice(0, 6);
+
+        const hourlyTimes = wData.hourly?.time || [];
+        const hourlyPrecip = wData.hourly?.precipitation || [];
+
+        let labels = [];
+        let rainData = [];
+
+        // ค้นหาช่วงชั่วโมงปัจจุบันเพื่อแสดงผลกราฟแบบเรียลไทม์ 6 ชั่วโมงล่าสุด/ถัดไป
+        const nowIndex = hourlyTimes.findIndex(t => new Date(t) >= new Date());
+        let startIndex = nowIndex !== -1 ? Math.max(0, nowIndex - 2) : 0;
+
+        for (let i = startIndex; i < startIndex + 6 && i < hourlyTimes.length; i++) {
+            const timeStr = hourlyTimes[i].split('T')[1] || "00:00";
+            labels.push(timeStr);
+            rainData.push(hourlyPrecip[i] !== undefined ? hourlyPrecip[i] : 0.0);
+        }
+
+        if (labels.length === 0) {
+            labels = ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00"];
+            rainData = [0, 0, 0, 0, 0, 0];
+        }
+
         if (chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: { 
                 labels, 
                 datasets: [{ 
-                    label: 'ปริมาณฝนสะสมสด (มม.)', 
-                    data: rain, 
+                    label: 'ปริมาณฝนสะสมรายชั่วโมง (มม.)', 
+                    data: rainData, 
                     borderColor: '#0d6efd', 
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    backgroundColor: 'rgba(13, 110, 253, 0.15)',
                     fill: true,
-                    tension: 0.3
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#0d6efd'
                 }] 
             },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            options: { 
+                responsive: true, 
+                scales: { 
+                    y: { beginAtZero: true, ticks: { precision: 1 } } 
+                } 
+            }
         });
     }
 
