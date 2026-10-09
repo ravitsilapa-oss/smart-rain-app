@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initProvinceDropdown();
     renderWaterLevelTable(currentPlaceName);
     renderCCTVSelector(currentPlaceName, currentLat, currentLng);
-    autoScanAllRisks(); // เริ่มสแกนเตือนภัยทุกจังหวัดอัตโนมัติ
+    autoScanAllRisks();
 
     const gpsBtn = document.getElementById('btnGPS');
     if (gpsBtn) {
@@ -385,6 +385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // สร้างและอัปเดตการ์ดพระอาทิตย์ขึ้น-ตกแบบชัดเจน
     function updateSunAndTideInfo(wData) {
         let sunriseTime = "06:10 น.", sunsetTime = "18:15 น.";
         if (wData.daily && wData.daily.sunrise && wData.daily.sunrise[0]) {
@@ -394,19 +395,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             sunsetTime = wData.daily.sunset[0].split('T')[1] + " น.";
         }
 
-        const tideBadge = document.getElementById('tideStatusBadge');
-        if (tideBadge) tideBadge.innerText = "น้ำขึ้นสูงสุด: 11:45 น. (+1.15 ม.) | น้ำลง: 18:20 น.";
-
-        let sunBadge = document.getElementById('sunInfoBadge');
-        if (!sunBadge) {
-            sunBadge = document.createElement('div');
-            sunBadge.id = 'sunInfoBadge';
-            sunBadge.className = 'mt-2 text-white small opacity-85';
-            const weatherBody = document.querySelector('.card-body, .bg-gradient');
-            if (weatherBody) weatherBody.appendChild(sunBadge);
-        }
-        if (sunBadge) {
-            sunBadge.innerHTML = `<i class="fa-solid fa-sun text-warning"></i> พระอาทิตย์ขึ้น: ${sunriseTime} | <i class="fa-solid fa-moon text-light"></i> พระอาทิตย์ตก: ${sunsetTime}`;
+        let sunCard = document.getElementById('sunAndTideCard');
+        if (!sunCard) {
+            sunCard = document.createElement('div');
+            sunCard.id = 'sunAndTideCard';
+            sunCard.className = 'card mt-3 shadow-sm border-0 bg-light text-dark';
+            sunCard.innerHTML = `
+                <div class="card-body py-2 px-3" style="font-size:0.85rem;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div><i class="fa-solid fa-sun text-warning me-1"></i> ดวงอาทิตย์ขึ้น: <b id="valSunrise">${sunriseTime}</b></div>
+                        <div><i class="fa-solid fa-moon text-secondary me-1"></i> ดวงอาทิตย์ตก: <b id="valSunset">${sunsetTime}</b></div>
+                    </div>
+                    <div class="mt-1 text-muted small border-top pt-1"><i class="fa-solid fa-water text-primary me-1"></i> น้ำขึ้นสูงสุด: 11:45 น. (+1.15 ม.) | น้ำลง: 18:20 น.</div>
+                </div>`;
+            
+            // แทรกไว้ใต้ส่วนป้ายแสดงอุณหภูมิ/สภาพอากาศ
+            const weatherBox = document.querySelector('.card, .bg-gradient');
+            if (weatherBox && weatherBox.parentNode) {
+                weatherBox.parentNode.insertBefore(sunCard, weatherBox.nextSibling);
+            }
+        } else {
+            document.getElementById('valSunrise').innerText = sunriseTime;
+            document.getElementById('valSunset').innerText = sunsetTime;
         }
     }
 
@@ -434,7 +444,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (adviceEl) adviceEl.innerHTML = adviceText;
     }
 
-    // ฟังก์ชันสแกนเตือนภัยทุกจังหวัดและทุกเขตแบบอัตโนมัติ
     async function autoScanAllRisks() {
         const list = document.getElementById('provinceRiskList');
         if (!list) return;
@@ -442,14 +451,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         let allResults = [];
 
-        // 1. สแกนจังหวัดหลักทั่วประเทศ
         for (const prov of LocationService.provinces) {
             const w = await WeatherService.fetchWeather(prov.lat, prov.lng);
             const r = RiskEngine.calculateRisk(w);
             allResults.push({ name: prov.name, type: 'จังหวัด', ...r, lat: prov.lat, lng: prov.lng });
         }
 
-        // 2. สแกนเขตกรุงเทพฯ ทั้งหมด
         for (const dist of LocationService.bangkokDistricts) {
             const w = await WeatherService.fetchWeather(dist.lat, dist.lng);
             const r = RiskEngine.calculateRisk(w);
@@ -531,7 +538,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderWaterLevelTable(currentPlaceName);
         renderCCTVSelector(currentPlaceName, currentLat, currentLng);
         updateTrafficAndRecommendations(risk, data, currentPlaceName);
-        updateSunAndTideInfo(data);
+        updateSunAndTideInfo(data); // แสดงการ์ดดวงอาทิตย์ขึ้น-ตกอย่างชัดเจน
         
         if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
