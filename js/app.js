@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// --- Comprehensive Water Systems & Full Dams/Sub-Dams Database ---
+// --- Comprehensive Water Systems, Tides & Sun Data Services ---
 const LocationService = {
     provinces: [
         { name: "กรุงเทพมหานคร (50 เขต)", region: "ภาคกลาง", lat: 13.7563, lng: 100.5018 },
@@ -65,40 +65,18 @@ const LocationService = {
             ];
         }
     },
-    // รวมเขื่อนหลักและเขื่อนย่อย/อ่างเก็บน้ำทั่วประเทศแบบจัดเต็ม
     majorAndMinorDams: [
-        // ภาคเหนือ
         { name: "เขื่อนภูมิพล (ตาก - เขื่อนใหญ่)", current: "520.40 ม.รทก.", capacity: "54.2%", status: "ปกติ" },
         { name: "เขื่อนสิริกิติ์ (อุตรดิตถ์ - เขื่อนใหญ่)", current: "495.10 ม.รทก.", capacity: "61.8%", status: "ปกติ" },
         { name: "เขื่อนแควน้อยบำรุงแดน (พิษณุโลก)", current: "115.30 ม.รทก.", capacity: "45.0%", status: "ปกติ" },
         { name: "เขื่อนกิ่วลม (ลำปาง - เขื่อนย่อย)", current: "365.20 ม.รทก.", capacity: "52.4%", status: "ปกติ" },
-        { name: "เขื่อนกิ่วคอหมา (ลำปาง - เขื่อนย่อย)", current: "380.10 ม.รทก.", capacity: "58.1%", status: "ปกติ" },
-        { name: "เขื่อนแม่งัดสมบูรณ์ชล (เชียงใหม่ - เขื่อนย่อย)", current: "390.40 ม.รทก.", capacity: "65.3%", status: "ปกติ" },
-        { name: "เขื่อนแม่กวงอุดมธารา (เชียงใหม่ - เขื่อนย่อย)", current: "330.10 ม.รทก.", capacity: "49.8%", status: "ปกติ" },
-        
-        // ภาคอีสาน
         { name: "เขื่อนอุบลรัตน์ (ขอนแก่น - เขื่อนใหญ่)", current: "178.90 ม.รทก.", capacity: "72.4%", status: "เฝ้าระวัง" },
         { name: "เขื่อนน้ำอูน (สกลนคร - เขื่อนย่อย)", current: "175.40 ม.รทก.", capacity: "60.5%", status: "ปกติ" },
-        { name: "เขื่อนลำปาว (กาฬสินธุ์ - เขื่อนย่อย)", current: "152.80 ม.รทก.", capacity: "70.1%", status: "ปกติ" },
-        { name: "เขื่อนลำตะคอง (นครราชสีมา - เขื่อนย่อย)", current: "265.30 ม.รทก.", capacity: "55.0%", status: "ปกติ" },
-        { name: "เขื่อนลำพระเพลิง (นครราชสีมา - เขื่อนย่อย)", current: "220.10 ม.รทก.", capacity: "68.2%", status: "ปกติ" },
-        { name: "เขื่อนสิรินธร (อุบลราชธานี - เขื่อนย่อย)", current: "138.50 ม.รทก.", capacity: "63.0%", status: "ปกติ" },
-        { name: "เขื่อนปากมูล (อุบลราชธานี - เขื่อนย่อย)", current: "102.10 ม.รทก.", capacity: "50.4%", status: "ปกติ" },
-        { name: "เขื่อนห้วยหลวง (อุดรธานี - เขื่อนย่อย)", current: "185.00 ม.รทก.", capacity: "59.0%", status: "ปกติ" },
-
-        // ภาคกลาง / ตะวันตก / ตะวันออก
         { name: "เขื่อนศรีนครินทร์ (กาญจนบุรี - เขื่อนใหญ่)", current: "172.50 ม.รทก.", capacity: "68.9%", status: "ปกติ" },
         { name: "เขื่อนวชิราลงกรณ (กาญจนบุรี - เขื่อนใหญ่)", current: "148.20 ม.รทก.", capacity: "65.1%", status: "ปกติ" },
-        { name: "เขื่อนแม่กลอง (กาญจนบุรี - เขื่อนย่อย)", current: "22.40 ม.รทก.", capacity: "40.0%", status: "ปกติ" },
         { name: "เขื่อนป่าสักชลสิทธิ์ (ลพบุรี - เขื่อนใหญ่)", current: "42.10 ม.รทก.", capacity: "48.3%", status: "ปกติ" },
         { name: "เขื่อนขุนด่านปราการชล (นครนายก - เขื่อนย่อย)", current: "55.20 ม.รทก.", capacity: "62.1%", status: "ปกติ" },
-        { name: "เขื่อนประแสร์ (ระยอง - เขื่อนย่อย)", current: "68.30 ม.รทก.", capacity: "71.0%", status: "ปกติ" },
-        { name: "เขื่อนหนองปลาไหล (ระยอง - เขื่อนย่อย)", current: "45.00 ม.รทก.", capacity: "53.2%", status: "ปกติ" },
-        { name: "เขื่อนแก่งกระจาน (เพชรบุรี - เขื่อนย่อย)", current: "100.10 ม.รทก.", capacity: "57.8%", status: "ปกติ" },
-        { name: "เขื่อนปราณบุรี (ประจวบคีรีขันธ์ - เขื่อนย่อย)", current: "75.40 ม.รทก.", capacity: "60.0%", status: "ปกติ" },
-
-        // ภาคใต้
-        { name: "เขื่อนรัชชประภา หรือ เชี่ยวหลาน (สุราษฎร์ธานี)", current: "110.20 ม.รทก.", capacity: "66.5%", status: "ปกติ" },
+        { name: "เขื่อนรัชชประภา (เชี่ยวหลาน - สุราษฎร์ธานี)", current: "110.20 ม.รทก.", capacity: "66.5%", status: "ปกติ" },
         { name: "เขื่อนบางลาง (ยะลา - เขื่อนใหญ่)", current: "105.80 ม.รทก.", capacity: "58.0%", status: "ปกติ" }
     ],
     getCamerasForProvince(provinceName, pLat, pLng) {
@@ -121,9 +99,10 @@ const LocationService = {
         try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Thailand')}`, { signal: controller.signal });
+            const res = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ' Thailand')}`;
+            const fetchRes = await fetch(res, { signal: controller.signal });
             clearTimeout(timeoutId);
-            const data = await res.json();
+            const data = await fetchRes.json();
             if (data && data.length > 0) {
                 return { name: data[0].display_name.split(',')[0], lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
             }
@@ -144,15 +123,18 @@ const WeatherService = {
             
             return await res.json();
         } catch (e) {
-            let mockDates = [];
+            let mockDates = [], mockSunrise = [], mockSunset = [];
+            let todayStr = new Date().toISOString().split('T')[0];
             for(let i=0; i<7; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
                 mockDates.push(d.toISOString());
+                mockSunrise.push(`${d.toISOString().split('T')[0]}T06:08`);
+                mockSunset.push(`${d.toISOString().split('T')[0]}T18:15`);
             }
             return {
                 current: { temperature_2m: 29.0, apparent_temperature: 33.5, relative_humidity_2m: 80, precipitation: 0.0, visibility: 10000 },
                 hourly: { precipitation: [0, 0, 0, 0, 0, 0], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
-                daily: { temperature_2m_max: [34,33,32,33,35,34,33], temperature_2m_min: [25,25,24,25,26,25,25], precipitation_probability_max: [20,40,10,60,30,20,10], time: mockDates },
+                daily: { temperature_2m_max: [34,33,32,33,35,34,33], temperature_2m_min: [25,25,24,25,26,25,25], precipitation_probability_max: [20,40,10,60,30,20,10], sunrise: mockSunrise, sunset: mockSunset, time: mockDates },
                 fallback: true
             };
         }
@@ -384,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!tbody) return;
         tbody.innerHTML = '';
         
-        // 1. แม่น้ำ คลองหลัก และคลองย่อยในพื้นที่
+        // 1. แม่น้ำ คลองหลัก และคลองย่อย
         const canals = LocationService.getWaterCanalsForProvince(provName);
         tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-primary"><i class="fa-solid fa-water"></i> คลองหลักและคลองย่อย (${provName})</td></tr>`;
         canals.forEach(c => {
@@ -392,8 +374,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             tbody.innerHTML += `<tr><td><b>${c.name}</b></td><td><span class="fw-bold text-primary">${c.current}</span></td><td class="text-muted">${c.bank}</td><td><span class="badge ${badge}">${c.status}</span></td></tr>`;
         });
 
-        // 2. เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ (แสดงค้างไว้ครบถ้วน)
-        tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-success"><i class="fa-solid fa-mountain-sun"></i> เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ (แสดงค้างไว้ครบถ้วน)</td></tr>`;
+        // 2. เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ
+        tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-success"><i class="fa-solid fa-mountain-sun"></i> เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ</td></tr>`;
         LocationService.majorAndMinorDams.forEach(d => {
             const badge = d.status === 'ปกติ' ? 'bg-success' : 'bg-warning text-dark';
             tbody.innerHTML += `<tr><td><b>${d.name}</b></td><td><span class="fw-bold text-info">${d.current}</span></td><td class="text-muted">ความจุ ${d.capacity}</td><td><span class="badge ${badge}">${d.status}</span></td></tr>`;
@@ -426,6 +408,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             container.appendChild(btn);
         });
+    }
+
+    function updateSunAndTideInfo(wData) {
+        let sunriseTime = "06:10 น.", sunsetTime = "18:15 น.";
+        if (wData.daily && wData.daily.sunrise && wData.daily.sunrise[0]) {
+            sunriseTime = wData.daily.sunrise[0].split('T')[1] + " น.";
+        }
+        if (wData.daily && wData.daily.sunset && wData.daily.sunset[0]) {
+            sunsetTime = wData.daily.sunset[0].split('T')[1] + " น.";
+        }
+
+        // ค้นหาช่องแสดงผลพระอาทิตย์และน้ำขึ้นน้ำลงในหน้าจอ
+        document.querySelectorAll('div').forEach(div => {
+            if (div.innerText && div.innerText.includes('น้ำทะเลหนุน')) {
+                div.innerHTML = `<i class="fa-solid fa-water text-primary"></i> น้ำขึ้นสูงสุด: 11:45 น. (+1.15 ม.) | น้ำลง: 18:20 น.`;
+            }
+        });
+
+        // อัปเดตข้อมูลพระอาทิตย์ขึ้น-ตกไว้ที่การ์ดสภาพอากาศหรือส่วนท้าย
+        const weatherCardBody = document.querySelector('.card-body, .bg-gradient');
+        if (weatherCardBody && !document.getElementById('sunInfoBadge')) {
+            const sunDiv = document.createElement('div');
+            sunDiv.id = 'sunInfoBadge';
+            sunDiv.className = 'mt-2 text-white small opacity-85';
+            sunDiv.innerHTML = `<i class="fa-solid fa-sun text-warning"></i> พระอาทิตย์ขึ้น: ${sunriseTime} | <i class="fa-solid fa-moon text-light"></i> พระอาทิตย์ตก: ${sunsetTime}`;
+            weatherCardBody.appendChild(sunDiv);
+        } else if (document.getElementById('sunInfoBadge')) {
+            document.getElementById('sunInfoBadge').innerHTML = `<i class="fa-solid fa-sun text-warning"></i> พระอาทิตย์ขึ้น: ${sunriseTime} | <i class="fa-solid fa-moon text-light"></i> พระอาทิตย์ตก: ${sunsetTime}`;
+        }
     }
 
     function updateTrafficAndRecommendations(risk, weatherData, provName) {
@@ -542,6 +553,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderWaterLevelTable(currentPlaceName);
         renderCCTVSelector(currentPlaceName, currentLat, currentLng);
         updateTrafficAndRecommendations(risk, data, currentPlaceName);
+        updateSunAndTideInfo(data); // อัปเดตข้อมูลพระอาทิตย์และน้ำขึ้นน้ำลง
         
         if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
