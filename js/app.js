@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// --- 77 Provinces Complete Database & Major Dams Services ---
+// --- 77 Provinces Complete Database & Dynamic Services ---
 const LocationService = {
     provinces: [
         // ภาคกลาง (21 จังหวัด)
@@ -99,48 +99,21 @@ const LocationService = {
     majorDams: [
         { name: "เขื่อนภูมิพล (ตาก)", current: "520.40 ม.รทก.", capacity: "54.2%", status: "ปกติ" },
         { name: "เขื่อนสิริกิติ์ (อุตรดิตถ์)", current: "495.10 ม.รทก.", capacity: "61.8%", status: "ปกติ" },
-        { name: "เขื่อนแควน้อยบำรุงแดน (พิษณุโลก)", current: "115.30 ม.รทก.", capacity: "45.0%", status: "ปกติ" },
         { name: "เขื่อนอุบลรัตน์ (ขอนแก่น)", current: "178.90 ม.รทก.", capacity: "72.4%", status: "เฝ้าระวัง" },
         { name: "เขื่อนศรีนครินทร์ (กาญจนบุรี)", current: "172.50 ม.รทก.", capacity: "68.9%", status: "ปกติ" },
-        { name: "เขื่อนวชิราลงกรณ (กาญจนบุรี)", current: "148.20 ม.รทก.", capacity: "65.1%", status: "ปกติ" },
-        { name: "เขื่อนป่าสักชลสิทธิ์ (ลพบุรี)", current: "42.10 ม.รทก.", capacity: "48.3%", status: "ปกติ" },
-        { name: "เขื่อนบางลาง (ยะลา)", current: "105.80 ม.รทก.", capacity: "58.0%", status: "ปกติ" },
-        { name: "เขื่อนน้ำอูน (สกลนคร)", current: "175.40 ม.รทก.", capacity: "60.5%", status: "ปกติ" },
-        { name: "เขื่อนลำปาว (กาฬสินธุ์)", current: "152.80 ม.รทก.", capacity: "70.1%", status: "ปกติ" }
+        { name: "เขื่อนป่าสักชลสิทธิ์ (ลพบุรี)", current: "42.10 ม.รทก.", capacity: "48.3%", status: "ปกติ" }
     ],
     getWaterCanalsForProvince(provinceName) {
-        if (provinceName.includes("กรุงเทพ")) {
-            return [
-                { name: "แม่น้ำเจ้าพระยา (ปากคลองตลาด)", current: "+0.45 ม.", bank: "+2.00 ม.", status: "ปกติ" },
-                { name: "คลองแสนแสบ (สะพานผ่านฟ้า)", current: "+0.35 ม.", bank: "+1.20 ม.", status: "ปกติ" },
-                { name: "คลองลาดพร้าว (อุโมงค์ระบายน้ำ)", current: "+0.80 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-                { name: "คลองเปรมประชากร (บางซื่อ)", current: "+1.10 ม.", bank: "+1.20 ม.", status: "เฝ้าระวัง" }
-            ];
-        } else if (provinceName.includes("เชียงใหม่")) {
-            return [
-                { name: "แม่น้ำปิง (สะพานนวรัฐ)", current: "+1.20 ม.", bank: "+3.50 ม.", status: "ปกติ" },
-                { name: "คลองแม่ข่า (ใจกลางเมือง)", current: "+0.50 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-                { name: "ลำห้วยแก้ว (หน้าสวนสัตว์)", current: "+0.30 ม.", bank: "+1.00 ม.", status: "ปกติ" }
-            ];
-        } else if (provinceName.includes("ขอนแก่น")) {
-            return [
-                { name: "แม่น้ำชี (อำเภอเมือง)", current: "+2.10 ม.", bank: "+5.00 ม.", status: "ปกติ" },
-                { name: "บึงแก่นนคร (จุดระบายน้ำ)", current: "+0.40 ม.", bank: "+1.20 ม.", status: "ปกติ" },
-                { name: "ห้วยพระบาท", current: "+0.20 ม.", bank: "+1.00 ม.", status: "ปกติ" }
-            ];
-        } else {
-            return [
-                { name: `แม่น้ำสายประธานหลัก (${provinceName})`, current: "+0.50 ม.", bank: "+3.00 ม.", status: "ปกติ" },
-                { name: `คลองชลประทานหลัก (${provinceName})`, current: "+0.30 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-                { name: `ระบบระบายน้ำเขตเทศบาล (${provinceName})`, current: "+0.20 ม.", bank: "+1.00 ม.", status: "ปกติ" }
-            ];
-        }
+        return [
+            { name: `แม่น้ำสายประธาน (${provinceName})`, current: "+0.45 ม.", bank: "+2.50 ม.", status: "ปกติ" },
+            { name: `คลองระบายน้ำหลัก (${provinceName})`, current: "+0.30 ม.", bank: "+1.20 ม.", status: "ปกติ" },
+            { name: `ระบบชลประทานเขตเมือง (${provinceName})`, current: "+0.20 ม.", bank: "+1.00 ม.", status: "ปกติ" }
+        ];
     },
     getCamerasForProvince(provinceName, pLat, pLng) {
         return [
             { id: 1, name: `ศูนย์กลางเมือง ${provinceName}`, lat: pLat, lng: pLng, waterLevel: "0.10 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat},${pLng},16` },
-            { id: 2, name: `ย่านเศรษฐกิจ ${provinceName}`, lat: pLat + 0.012, lng: pLng + 0.012, waterLevel: "0.20 ม.", status: "เฝ้าระวัง (ระบายน้ำปกติ)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat + 0.012},${pLng + 0.012},16` },
-            { id: 3, name: `ทางหลวงหลัก ${provinceName}`, lat: pLat - 0.012, lng: pLng - 0.012, waterLevel: "0.05 ม.", status: "ปกติ (ผิวจราจรแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat - 0.012},${pLng - 0.012},16` }
+            { id: 2, name: `ย่านเศรษฐกิจ ${provinceName}`, lat: pLat + 0.012, lng: pLng + 0.012, waterLevel: "0.20 ม.", status: "เฝ้าระวัง (ระบายน้ำปกติ)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat + 0.012},${pLng + 0.012},16` }
         ];
     },
     getCurrentGPS() {
@@ -445,21 +418,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!tbody) return;
         tbody.innerHTML = '';
         
-        // 1. คลองและแม่น้ำในพื้นที่
         const canals = LocationService.getWaterCanalsForProvince(provName);
-        tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-primary"><i class="fa-solid fa-water"></i> คลองและแม่น้ำในพื้นที่ (${provName})</td></tr>`;
+        tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-primary"><i class="fa-solid fa-water"></i> แม่น้ำและคลองในพื้นที่ (${provName})</td></tr>`;
         canals.forEach(c => {
-            const badge = c.status === 'ปกติ' ? 'bg-success' : 'bg-warning text-dark';
             tbody.innerHTML += `
                 <tr>
                     <td><b>${c.name}</b></td>
                     <td><span class="fw-bold text-primary">${c.current}</span></td>
                     <td class="text-muted">${c.bank}</td>
-                    <td><span class="badge ${badge}">${c.status}</span></td>
+                    <td><span class="badge bg-success">${c.status}</span></td>
                 </tr>`;
         });
 
-        // 2. ระดับน้ำเขื่อนหลักทั่วประเทศ
         tbody.innerHTML += `<tr class="table-light"><td colspan="4" class="fw-bold text-success"><i class="fa-solid fa-mountain-sun"></i> ระดับน้ำเขื่อนหลักทั่วประเทศ</td></tr>`;
         LocationService.majorDams.forEach(d => {
             const badge = d.status === 'ปกติ' ? 'bg-success' : 'bg-warning text-dark';
@@ -499,6 +469,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             container.appendChild(btn);
         });
+    }
+
+    function updateTrafficAndRecommendations(risk, weatherData, provName) {
+        // ค้นหาตำแหน่ง element ความเร็วและคำแนะนำ (รองรับทั้งแบบมี ID หรือค้นหาผ่าน card)
+        const cards = document.querySelectorAll('.card, div');
+        let speedEl = null;
+        let adviceEl = null;
+
+        // ค้นหาข้อความที่มีคำว่า "ความเร็วเฉลี่ย" หรือสร้าง ID อัตโนมัติถ้ามี
+        document.querySelectorAll('div').forEach(div => {
+            if (div.innerText && div.innerText.includes('ความเร็วเฉลี่ยถนนหลัก')) {
+                const spans = div.querySelectorAll('div, span, p');
+                if (spans.length >= 2) speedEl = spans[1];
+            }
+            if (div.innerText && div.innerText.includes('คำแนะนำเส้นทาง')) {
+                const spans = div.querySelectorAll('div, span, p');
+                if (spans.length >= 2) adviceEl = spans[1];
+            }
+        });
+
+        let speedText = "45 กม./ชม. (คล่องตัว)";
+        let adviceText = `ใช้เส้นทางหลักใน ${provName} ด้วยความระมัดระวัง`;
+
+        if (risk.score > 75 || (weatherData.current?.precipitation > 5)) {
+            speedText = "20 กม./ชม. (เคลื่อนตัวช้า / ฝนตก)";
+            adviceText = `⚠️ เลี่ยงเส้นทางลุ่มต่ำใน ${provName} และเปิดไฟหน้ารถ`;
+        } else if (risk.score > 40) {
+            speedText = "35 กม./ชม. (ปานกลาง)";
+            adviceText = `🚗 ระวังผิวถนนเปียกลื่นใน ${provName}`;
+        }
+
+        if (speedEl) speedEl.innerHTML = speedText;
+        if (adviceEl) adviceEl.innerHTML = adviceText;
     }
 
     async function refreshAllData() {
@@ -541,6 +544,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderChart(data);
         renderWaterLevelTable(currentPlaceName);
         renderCCTVSelector(currentPlaceName, currentLat, currentLng);
+        updateTrafficAndRecommendations(risk, data, currentPlaceName); // อัปเดตการจราจรตามจังหวัดและฝน
         
         if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
