@@ -27,10 +27,10 @@ const LocationService = {
         { name: "จุดเสี่ยงน้ำท่วม: ถนนพหลโยธิน (แยกเกษตร)", lat: 13.8402, lng: 100.5724 }
     ],
     cctvCameras: [
-        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" },
-        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" },
-        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" },
-        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/" }
+        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.8050,100.5300,16" },
+        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.8130,100.5605,16" },
+        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.7650,100.5380,16" },
+        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.7578,100.5654,16" }
     ],
     waterCanals: [
         { name: "คลองแสนแสบ (สะพานผ่านฟ้า)", current: "+0.45 ม.", bank: "+1.20 ม.", status: "ปกติ" },
@@ -379,7 +379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div>🌊 น้ำผิวจราจร: <span class="text-info fw-bold">${cam.waterLevel}</span></div>
                             <div>🔍 สถานะ AI: <span class="text-success">${cam.status}</span></div>
                             <div>🛡️ PDPA: <span class="text-light">${cam.pdpa}</span></div>
-                            <a href="${cam.url}" target="_blank" class="btn btn-sm btn-danger mt-2 w-100 fw-bold">🎥 เปิดดูกล้อง CCTV สด</a>
+                            <a href="${cam.url}" target="_blank" class="btn btn-sm btn-danger mt-2 w-100 fw-bold">🎥 เปิดดูกล้องจุดนี้ทันที</a>
                         </div>`;
                 }
             };
@@ -420,107 +420,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let aiMsg = `พื้นที่ ${currentPlaceName}: ระบบประมวลผล 4 มิติสมบูรณ์ `;
         if (risk.score > 75) aiMsg += `🚨 แจ้งเตือนภัยระดับวิกฤต ฝนตกหนักสะสม น้ำใกล้ล้นตลิ่ง แนะนำเลี่ยงเส้นทางทันที `;
-        else aiMsg += `✅ สภาพอากาศและระดับน้ำอยู่ในเกณฑ์ปลอดภัย จราจรคล่องตัว`;
-        document.getElementById('aiAnalysisResult').innerText = aiMsg;
-
-        render7DayForecast(data);
-        renderChart(data);
-        if (statusText) statusText.innerText = `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
-
-        WeatherService.fetchAirQuality(currentLat, currentLng).then(pmVal => {
-            const pmBadge = document.getElementById('valPM25Badge');
-            if (pmBadge) pmBadge.innerText = `PM2.5: ${pmVal.toFixed(1)} µg/m³`;
-        });
-    }
-
-    function render7DayForecast(data) {
-        const list = document.getElementById('forecast7DaysList');
-        if (!list || !data.daily) return;
-        list.innerHTML = '';
-        const days = data.daily.time || [];
-        const maxTemps = data.daily.temperature_2m_max || [];
-        const minTemps = data.daily.temperature_2m_min || [];
-        const probs = data.daily.precipitation_probability_max || [];
-
-        days.forEach((dStr, i) => {
-            const dateObj = new Date(dStr);
-            const dayName = dateObj.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
-            const maxT = maxTemps[i] || '--';
-            const minT = minTemps[i] || '--';
-            const rainProb = probs[i] || 0;
-
-            list.innerHTML += `
-                <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom">
-                    <div class="fw-bold">${dayName}</div>
-                    <div class="text-muted small"><i class="fa-solid fa-cloud-rain text-primary"></i> ${rainProb}%</div>
-                    <div><span class="text-danger fw-bold">${maxT}°</span> <span class="text-muted">/ ${minT}°C</span></div>
-                </div>`;
-        });
-    }
-
-    async function handleScan() {
-        const list = document.getElementById('provinceRiskList');
-        if (!list) return;
-        list.innerHTML = `<div class="text-center p-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> กำลังสแกนความเสี่ยงทั่วประเทศ...</div>`;
-        scannedDataStore = [];
-        
-        for (const prov of LocationService.provinces) {
-            const w = await WeatherService.fetchWeather(prov.lat, prov.lng);
-            const r = RiskEngine.calculateRisk(w);
-            scannedDataStore.push({ name: prov.name, region: prov.region, score: r.score, level: r.level, badgeClass: r.badgeClass, rainPast: r.rainPast });
-        }
-        scannedDataStore.sort((a,b) => b.score - a.score);
-        
-        list.innerHTML = '';
-        scannedDataStore.forEach(item => {
-            list.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center py-2 bg-transparent">
-                <div><b>${item.name}</b> <small class="text-muted">(${item.region})</small></div>
-                <span class="badge ${item.badgeClass} p-2 rounded-pill">${item.score} ${item.level}</span>
-            </div>`;
-        });
-    }
-
-    function initProvinceDropdown() {
-        const sel = document.getElementById('provinceSelect');
-        if (!sel) return;
-        LocationService.provinces.forEach(p => sel.innerHTML += `<option value="${p.lat},${p.lng}">${p.name} (${p.region})</option>`);
-        sel.onchange = e => {
-            if (!e.target.value) return;
-            const [lat, lng] = e.target.value.split(',').map(Number);
-            currentLat = lat; currentLng = lng;
-            currentPlaceName = e.target.options[e.target.selectedIndex].text.split(' ')[0];
-            RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
-            refreshAllData();
-        };
-    }
-
-    function renderChart(wData) {
-        const ctxElement = document.getElementById('forecastChart');
-        if (!ctxElement) return;
-        const ctx = ctxElement.getContext('2d');
-        const labels = (wData.hourly?.time || []).slice(0, 6).map(t => t.split('T')[1]);
-        const rain = (wData.hourly?.precipitation || []).slice(0, 6);
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: { 
-                labels, 
-                datasets: [{ 
-                    label: 'ปริมาณฝนสะสม (มม.)', 
-                    data: rain, 
-                    borderColor: '#0d6efd', 
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }] 
-            },
-            options: { responsive: true, scales: { y: { beginAtZero: true } } }
-        });
-    }
-
-    refreshAllData();
-    RadarService.loadRadarFrames().then(ts => {
-        const timeline = document.getElementById('radarTimeline');
-        if(ts.length > 0 && timeline) timeline.max = ts.length - 1;
-    });
-});
+        else aiMsg += `✅ สภาพอากาศและระดับน้ำอยู่
