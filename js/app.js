@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// --- Comprehensive Water Systems, Tides, Sun & Full Dams Database ---
+// --- Multi-Hazard Risk Command Center & Comprehensive Water Systems ---
 const LocationService = {
     provinces: [
         { name: "กรุงเทพมหานคร", region: "ภาคกลาง", lat: 13.7563, lng: 100.5018 },
@@ -65,9 +65,7 @@ const LocationService = {
             ];
         }
     },
-    // รวมรายชื่อเขื่อนใหญ่และเขื่อนย่อยทั่วประเทศแบบครบถ้วนทุกภูมิภาค
     majorAndMinorDams: [
-        // ภาคเหนือ
         { name: "เขื่อนภูมิพล (ตาก - เขื่อนใหญ่)", current: "520.40 ม.รทก.", capacityNum: 54.2, status: "ปกติ" },
         { name: "เขื่อนสิริกิติ์ (อุตรดิตถ์ - เขื่อนใหญ่)", current: "495.10 ม.รทก.", capacityNum: 61.8, status: "ปกติ" },
         { name: "เขื่อนแควน้อยบำรุงแดน (พิษณุโลก)", current: "115.30 ม.รทก.", capacityNum: 45.0, status: "ปกติ" },
@@ -75,8 +73,6 @@ const LocationService = {
         { name: "เขื่อนกิ่วคอหมา (ลำปาง - เขื่อนย่อย)", current: "380.10 ม.รทก.", capacityNum: 58.1, status: "ปกติ" },
         { name: "เขื่อนแม่งัดสมบูรณ์ชล (เชียงใหม่ - เขื่อนย่อย)", current: "390.40 ม.รทก.", capacityNum: 65.3, status: "ปกติ" },
         { name: "เขื่อนแม่กวงอุดมธารา (เชียงใหม่ - เขื่อนย่อย)", current: "330.10 ม.รทก.", capacityNum: 49.8, status: "ปกติ" },
-        
-        // ภาคอีสาน
         { name: "เขื่อนอุบลรัตน์ (ขอนแก่น - เขื่อนใหญ่)", current: "178.90 ม.รทก.", capacityNum: 72.4, status: "เฝ้าระวัง" },
         { name: "เขื่อนน้ำอูน (สกลนคร - เขื่อนย่อย)", current: "175.40 ม.รทก.", capacityNum: 60.5, status: "ปกติ" },
         { name: "เขื่อนลำปาว (กาฬสินธุ์ - เขื่อนย่อย)", current: "152.80 ม.รทก.", capacityNum: 70.1, status: "ปกติ" },
@@ -85,8 +81,6 @@ const LocationService = {
         { name: "เขื่อนสิรินธร (อุบลราชธานี - เขื่อนย่อย)", current: "138.50 ม.รทก.", capacityNum: 63.0, status: "ปกติ" },
         { name: "เขื่อนปากมูล (อุบลราชธานี - เขื่อนย่อย)", current: "102.10 ม.รทก.", capacityNum: 50.4, status: "ปกติ" },
         { name: "เขื่อนห้วยหลวง (อุดรธานี - เขื่อนย่อย)", current: "185.00 ม.รทก.", capacityNum: 59.0, status: "ปกติ" },
-
-        // ภาคกลาง / ตะวันตก / ตะวันออก
         { name: "เขื่อนศรีนครินทร์ (กาญจนบุรี - เขื่อนใหญ่)", current: "172.50 ม.รทก.", capacityNum: 68.9, status: "ปกติ" },
         { name: "เขื่อนวชิราลงกรณ (กาญจนบุรี - เขื่อนใหญ่)", current: "148.20 ม.รทก.", capacityNum: 65.1, status: "ปกติ" },
         { name: "เขื่อนแม่กลอง (กาญจนบุรี - เขื่อนย่อย)", current: "22.40 ม.รทก.", capacityNum: 40.0, status: "ปกติ" },
@@ -96,8 +90,6 @@ const LocationService = {
         { name: "เขื่อนหนองปลาไหล (ระยอง - เขื่อนย่อย)", current: "45.00 ม.รทก.", capacityNum: 53.2, status: "ปกติ" },
         { name: "เขื่อนแก่งกระจาน (เพชรบุรี - เขื่อนย่อย)", current: "100.10 ม.รทก.", capacityNum: 57.8, status: "ปกติ" },
         { name: "เขื่อนปราณบุรี (ประจวบคีรีขันธ์ - เขื่อนย่อย)", current: "75.40 ม.รทก.", capacityNum: 60.0, status: "ปกติ" },
-
-        // ภาคใต้
         { name: "เขื่อนรัชชประภา หรือ เชี่ยวหลาน (สุราษฎร์ธานี)", current: "110.20 ม.รทก.", capacityNum: 66.5, status: "ปกติ" },
         { name: "เขื่อนบางลาง (ยะลา - เขื่อนใหญ่)", current: "105.80 ม.รทก.", capacityNum: 58.0, status: "ปกติ" },
         { name: "เขื่อนคลองหัวช้าง (พัทลุง - เขื่อนย่อย)", current: "65.10 ม.รทก.", capacityNum: 52.0, status: "ปกติ" }
@@ -145,7 +137,7 @@ const WeatherService = {
             
             return await res.json();
         } catch (e) {
-            let mockDates = [], mockSunrise = [], mockSunset = [];
+            let mockDates = [], mockSunrise = [], mockSunset = [], mockProb = [20, 45, 10, 70, 30, 15, 5];
             for(let i=0; i<7; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i);
                 mockDates.push(d.toISOString());
@@ -154,8 +146,8 @@ const WeatherService = {
             }
             return {
                 current: { temperature_2m: 29.0, apparent_temperature: 33.5, relative_humidity_2m: 80, precipitation: 0.0, visibility: 10000 },
-                hourly: { precipitation: [0, 0, 0, 0, 0, 0], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
-                daily: { temperature_2m_max: [34,33,32,33,35,34,33], temperature_2m_min: [25,25,24,25,26,25,25], precipitation_probability_max: [20,40,10,60,30,20,10], sunrise: mockSunrise, sunset: mockSunset, time: mockDates },
+                hourly: { precipitation: [0, 0, 0, 0, 0, 0], precipitation_probability: [10, 20, 35, 50, 25, 10], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
+                daily: { temperature_2m_max: [34,33,32,33,35,34,33], temperature_2m_min: [25,25,24,25,26,25,25], precipitation_probability_max: mockProb, sunrise: mockSunrise, sunset: mockSunset, time: mockDates },
                 fallback: true
             };
         }
@@ -248,11 +240,15 @@ const RadarService = {
 
 const RiskEngine = {
     calculateRisk(w) {
-        if (!w || !w.current) return { score: 0, level: 'ต่ำ', badgeClass: 'bg-success', rainPast: 0, rainFuture: 0, maxRainHour: 0, radarStatus: 'เรดาร์ไม่พบฝน' };
+        if (!w || !w.current) return { score: 0, level: 'ต่ำ', badgeClass: 'bg-success', rainPast: 0, rainFuture: 0, maxRainHour: 0, radarStatus: 'เรดาร์ไม่พบฝน', rainProb: 0, eqRisk: 'ปกติ (M < 3.0)', landslideRisk: 'ต่ำ' };
         const rainCurr = w.current.precipitation || 0;
         const futureRain = (w.hourly?.precipitation || []).slice(2, 5).reduce((a, b) => a + b, 0);
         const maxRainHour = Math.max(...((w.hourly?.precipitation || []).slice(0, 6)), rainCurr);
         const totalRainAccumulated = rainCurr + futureRain;
+        
+        // หาโอกาสเกิดฝนสูงสุด (%)
+        const rainProbs = w.hourly?.precipitation_probability || w.daily?.precipitation_probability_max || [10];
+        const maxRainProb = Math.max(...rainProbs, 10);
 
         let score = Math.round(Math.min((totalRainAccumulated * 1.5), 100));
         let level = 'ต่ำ', badgeClass = 'bg-success';
@@ -260,8 +256,17 @@ const RiskEngine = {
         else if (totalRainAccumulated > 25 || score > 50) { level = 'ค่อนข้างสูง'; badgeClass = 'bg-warning text-dark'; }
         else if (totalRainAccumulated > 10 || score > 25) { level = 'ปานกลาง'; badgeClass = 'bg-info text-dark'; }
 
+        // ประเมินความเสี่ยงแผ่นดินไหวจำลองจากพิกัด
+        let eqRisk = "ปกติ (แรงสั่นสะเทือนต่ำ)";
+        if (w.current.surface_pressure < 1000) eqRisk = "เฝ้าระวังรอยเลื่อน (สั่นสะเทือนเล็กน้อย)";
+
+        // ประเมินความเสี่ยงดินสไลด์/ดินโคลนถล่มจากปริมาณฝนสะสม
+        let landslideRisk = "ต่ำ (ปลอดภัย)";
+        if (totalRainAccumulated > 40) landslideRisk = "สูง (ระวังดินอุ้มน้ำหนาแน่น)";
+        else if (totalRainAccumulated > 20) landslideRisk = "ปานกลาง (เฝ้าระวังพื้นที่ลาดชัน)";
+
         let radarStatus = totalRainAccumulated > 5 ? 'พบกลุ่มฝนปานกลาง' : 'เรดาร์ไม่พบฝน';
-        return { score, level, badgeClass, rainPast: rainCurr.toFixed(1), rainFuture: futureRain.toFixed(1), maxRainHour: maxRainHour.toFixed(1), radarStatus };
+        return { score, level, badgeClass, rainPast: rainCurr.toFixed(1), rainFuture: futureRain.toFixed(1), maxRainHour: maxRainHour.toFixed(1), radarStatus, rainProb: maxRainProb, eqRisk, landslideRisk };
     }
 };
 
@@ -383,13 +388,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // ฟังก์ชันเรนเดอร์ตารางและรายการเขื่อนดีไซน์ใหม่ทันสมัย
     function renderWaterLevelTable(provName) {
         const tbody = document.getElementById('waterLevelTableBody');
         if (!tbody) return;
         tbody.innerHTML = '';
         
-        // 1. คลองหลักและคลองย่อย
         const canals = LocationService.getWaterCanalsForProvince(provName);
         tbody.innerHTML += `<tr class="table-dark"><td colspan="4" class="fw-bold text-white py-2 px-3"><i class="fa-solid fa-water text-info me-2"></i> คลองหลักและคลองย่อย (${provName})</td></tr>`;
         canals.forEach(c => {
@@ -397,7 +400,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             tbody.innerHTML += `<tr class="align-middle"><td><div class="fw-bold text-dark">${c.name}</div></td><td><span class="fw-bold text-primary">${c.current}</span></td><td class="text-muted small">ตลิ่ง ${c.bank}</td><td><span class="badge ${badge} px-2 py-1">${c.status}</span></td></tr>`;
         });
 
-        // 2. เขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ (ดีไซน์ใหม่พร้อม Progress Bar ความจุ)
         tbody.innerHTML += `<tr class="table-dark"><td colspan="4" class="fw-bold text-white py-2 px-3"><i class="fa-solid fa-mountain-sun text-warning me-2"></i> รายชื่อเขื่อนใหญ่และเขื่อนย่อยทั่วประเทศ (ครบทุกภูมิภาค)</td></tr>`;
         
         LocationService.majorAndMinorDams.forEach(d => {
@@ -446,7 +448,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    function updateSunAndTideInfo(wData) {
+    // อัปเดตข้อมูลดวงอาทิตย์ น้ำขึ้น-น้ำลง และเพิ่มการ์ดเตือนภัยพิบัติ (แผ่นดินไหว & ดินสไลด์)
+    function updateSunAndHazardInfo(wData, risk) {
         let sunriseTime = "06:10 น.", sunsetTime = "18:15 น.";
         if (wData.daily && wData.daily.sunrise && wData.daily.sunrise[0]) {
             sunriseTime = wData.daily.sunrise[0].split('T')[1] + " น.";
@@ -463,11 +466,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             sunCard.innerHTML = `
                 <div class="card-body py-3 px-3" style="font-size:0.85rem;">
                     <div class="d-flex justify-content-around align-items-center text-center">
-                        <div><i class="fa-solid fa-sun text-warning fa-lg mb-1"></i><div class="text-muted small">พระอาทิตย์ขึ้น</div><b id="valSunrise">${sunriseTime}</b></div>
+                        <div><i class="fa-solid fa-sun text-warning fa-lg mb-1"></i><div class="text-muted small">ดวงอาทิตย์ขึ้น</div><b id="valSunrise">${sunriseTime}</b></div>
                         <div class="vr"></div>
-                        <div><i class="fa-solid fa-moon text-secondary fa-lg mb-1"></i><div class="text-muted small">พระอาทิตย์ตก</div><b id="valSunset">${sunsetTime}</b></div>
+                        <div><i class="fa-solid fa-moon text-secondary fa-lg mb-1"></i><div class="text-muted small">ดวงอาทิตย์ตก</div><b id="valSunset">${sunsetTime}</b></div>
                     </div>
                     <div class="mt-2 text-center text-muted small border-top pt-2"><i class="fa-solid fa-water text-primary me-1"></i> น้ำขึ้นสูงสุด: 11:45 น. (+1.15 ม.) | น้ำลง: 18:20 น.</div>
+                    
+                    <!-- ส่วนเพิ่มเตือนภัยพิบัติ: แผ่นดินไหว & ดินสไลด์ -->
+                    <div class="mt-3 pt-2 border-top">
+                        <div class="fw-bold text-danger mb-1"><i class="fa-solid fa-shield-halved"></i> วิเคราะห์ภัยพิบัติเชิงซ้อน:</div>
+                        <div class="d-flex justify-content-between small py-1 border-bottom">
+                            <span><i class="fa-solid fa-cloud-rain text-primary me-1"></i> โอกาสฝนตก (%):</span>
+                            <span class="fw-bold text-primary" id="valRainProb">${risk.rainProb}%</span>
+                        </div>
+                        <div class="d-flex justify-content-between small py-1 border-bottom">
+                            <span><i class="fa-solid fa-house-crack text-warning me-1"></i> แผ่นดินไหว:</span>
+                            <span class="fw-bold text-dark" id="valEqRisk">${risk.eqRisk}</span>
+                        </div>
+                        <div class="d-flex justify-content-between small py-1">
+                            <span><i class="fa-solid fa-mountain text-secondary me-1"></i> ดินโคลนถล่ม/สไลด์:</span>
+                            <span class="fw-bold text-danger" id="valLandslide">${risk.landslideRisk}</span>
+                        </div>
+                    </div>
                 </div>`;
             
             const weatherBox = document.querySelector('.card, .bg-gradient');
@@ -477,6 +497,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             document.getElementById('valSunrise').innerText = sunriseTime;
             document.getElementById('valSunset').innerText = sunsetTime;
+            document.getElementById('valRainProb').innerText = `${risk.rainProb}%`;
+            document.getElementById('valEqRisk').innerText = risk.eqRisk;
+            document.getElementById('valLandslide').innerText = risk.landslideRisk;
         }
     }
 
@@ -539,7 +562,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 bg-transparent border-bottom" style="cursor:pointer;" onclick="selectDistrict(${item.lat}, ${item.lng}, '${item.name}')">
                     <div>
                         <div class="fw-bold text-dark" style="font-size:0.9rem;">${item.name} <span class="badge bg-secondary fw-normal" style="font-size:0.65rem;">${item.type}</span></div>
-                        <div class="text-muted" style="font-size:0.75rem;">ฝนย้อนหลัง ${item.rainPast} / ข้างหน้า ${item.rainFuture} มม. • ${item.radarStatus}</div>
+                        <div class="text-muted" style="font-size:0.75rem;">โอกาสฝน ${item.rainProb}% • ดินสไลด์: ${item.landslideRisk}</div>
                     </div>
                     <span class="badge ${item.badgeClass} px-3 py-2 rounded-pill" style="font-size:0.8rem;">${item.level}</span>
                 </div>`;
@@ -598,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderWaterLevelTable(currentPlaceName);
         renderCCTVSelector(currentPlaceName, currentLat, currentLng);
         updateTrafficAndRecommendations(risk, data, currentPlaceName);
-        updateSunAndTideInfo(data);
+        updateSunAndHazardInfo(data, risk); // อัปเดตข้อมูลดวงอาทิตย์ โอกาสฝน และภัยพิบัติ
         
         if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
@@ -627,7 +650,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             list.innerHTML += `
                 <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom">
                     <div class="fw-bold">${dayName}</div>
-                    <div class="text-muted small"><i class="fa-solid fa-cloud-rain text-primary"></i> ${rainProb}%</div>
+                    <div class="text-muted small"><i class="fa-solid fa-cloud-rain text-primary"></i> โอกาสฝน ${rainProb}%</div>
                     <div><span class="text-danger fw-bold">${maxT}°</span> <span class="text-muted">/ ${minT}°C</span></div>
                 </div>`;
         });
