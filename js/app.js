@@ -5,7 +5,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// --- 4 Dimensions Core Services (77 Provinces of Thailand) ---
+// --- 4 Dimensions Core Services (77 Provinces & Dynamic CCTV) ---
 const LocationService = {
     provinces: [
         // ภาคกลาง
@@ -102,17 +102,17 @@ const LocationService = {
         { name: "จุดเสี่ยงน้ำท่วม: ถนนสุขุมวิท (อุดมสุข-แบริ่ง)", lat: 13.6685, lng: 100.6095 },
         { name: "จุดเสี่ยงน้ำท่วม: ถนนพหลโยธิน (แยกเกษตร)", lat: 13.8402, lng: 100.5724 }
     ],
-    cctvCameras: [
-        { id: 1, name: "แยกบางซื่อ / ประชาชื่น", lat: 13.8050, lng: 100.5300, waterLevel: "0.15 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.8050,100.5300,16" },
-        { id: 2, name: "ห้าแยกลาดพร้าว", lat: 13.8130, lng: 100.5605, waterLevel: "0.35 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.8130,100.5605,16" },
-        { id: 3, name: "แยกพญาไท", lat: 13.7650, lng: 100.5380, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.7650,100.5380,16" },
-        { id: 4, name: "แยกพระราม 9", lat: 13.7578, lng: 100.5654, waterLevel: "0.40 ม.", status: "วิกฤต (น้ำท่วมขังผิวถนน)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: "https://traffic.longdo.com/?l=13.7578,100.5654,16" }
-    ],
+    getCamerasForProvince(provinceName, pLat, pLng) {
+        // Dynamic camera generator based on selected province
+        return [
+            { id: 1, name: `จุดตรวจหลัก ${provinceName} (เขตเมือง)`, lat: pLat, lng: pLng, waterLevel: "0.10 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat},${pLng},16` },
+            { id: 2, name: `แยกสำคัญ ${provinceName} (ศูนย์ราชการ)`, lat: pLat + 0.015, lng: pLng + 0.015, waterLevel: "0.25 ม.", status: "เฝ้าระวัง (ขังรอระบาย)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat + 0.015},${pLng + 0.015},16` },
+            { id: 3, name: `จุดตัดทางหลวง ${provinceName}`, lat: pLat - 0.015, lng: pLng - 0.015, waterLevel: "0.05 ม.", status: "ปกติ (น้ำแห้ง)", pdpa: "เบลอใบหน้า/ทะเบียนรถเรียบร้อย", url: `https://traffic.longdo.com/?l=${pLat - 0.015},${pLng - 0.015},16` }
+        ];
+    },
     waterCanals: [
-        { name: "คลองแสนแสบ (สะพานผ่านฟ้า)", current: "+0.45 ม.", bank: "+1.20 ม.", status: "ปกติ" },
-        { name: "คลองลาดพร้าว (อุโมงค์ระบายน้ำ)", current: "+0.85 ม.", bank: "+1.50 ม.", status: "ปกติ" },
-        { name: "คลองเปรมประชากร (บางซื่อ)", current: "+1.10 ม.", bank: "+1.20 ม.", status: "เฝ้าระวังใกล้ล้น" },
-        { name: "คลองประเวศบุรีรมย์", current: "+0.30 ม.", bank: "+1.00 ม.", status: "ปกติ" }
+        { name: "คลองหลัก / แม่น้ำสายประธาน", current: "+0.45 ม.", bank: "+1.20 ม.", status: "ปกติ" },
+        { name: "ระบบระบายน้ำเขตเมือง", current: "+0.30 ม.", bank: "+1.00 ม.", status: "ปกติ" }
     ],
     getCurrentGPS() {
         return new Promise((resolve, reject) => {
@@ -192,7 +192,6 @@ const RadarService = {
         }).addTo(this.map);
 
         this.renderFloodHotspots();
-        this.renderCCTVMarkers();
         this.updateLocationMarker(lat, lng, "ตำแหน่งบัญชาการ");
     },
 
@@ -210,21 +209,6 @@ const RadarService = {
                 fillOpacity: 0.3,
                 radius: 1200
             }).addTo(this.map).bindPopup(`<b>⚠️ ${spot.name}</b><br>จุดเสี่ยงน้ำท่วมสะสม`);
-        });
-    },
-
-    renderCCTVMarkers() {
-        if (!this.map) return;
-        LocationService.cctvCameras.forEach(cam => {
-            const camIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style='background-color:#dc3545;color:white;padding:3px 6px;border-radius:12px;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);font-weight:bold;'>📷 CCTV #${cam.id}</div>`,
-                iconSize: [65, 25],
-                iconAnchor: [32, 12]
-            });
-
-            L.marker([cam.lat, cam.lng], { icon: camIcon }).addTo(this.map)
-                .bindPopup(`<b>📹 ${cam.name}</b><br>สถานะ: ${cam.status}<br>น้ำสูง: ${cam.waterLevel}<br><a href="${cam.url}" target="_blank" class="btn btn-sm btn-danger mt-1 text-white py-0 w-100 fw-bold">🎥 เปิดดูกล้องจุดนี้ทันที</a>`);
         });
     },
 
@@ -379,7 +363,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     RadarService.initMap('map', currentLat, currentLng);
     initProvinceDropdown();
     renderWaterLevelTable();
-    renderCCTVSelector();
+    renderCCTVSelector(currentPlaceName, currentLat, currentLng);
 
     const gpsBtn = document.getElementById('btnGPS');
     if (gpsBtn) {
@@ -445,22 +429,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!tbody) return;
         tbody.innerHTML = '';
         LocationService.waterCanals.forEach(c => {
-            const badge = c.status === 'ปกติ' ? 'bg-success' : 'bg-warning text-dark';
             tbody.innerHTML += `
                 <tr>
                     <td><b>${c.name}</b></td>
                     <td><span class="fw-bold text-primary">${c.current}</span></td>
                     <td class="text-muted">${c.bank}</td>
-                    <td><span class="badge ${badge}">${c.status}</span></td>
+                    <td><span class="badge bg-success">${c.status}</span></td>
                 </tr>`;
         });
     }
 
-    function renderCCTVSelector() {
+    function renderCCTVSelector(provName, pLat, pLng) {
         const container = document.getElementById('cctvSelectorChips');
         if (!container) return;
         container.innerHTML = '';
-        LocationService.cctvCameras.forEach(cam => {
+        const cameras = LocationService.getCamerasForProvince(provName, pLat, pLng);
+        
+        cameras.forEach(cam => {
             const btn = document.createElement('button');
             btn.className = 'btn btn-sm btn-outline-dark rounded-pill px-3 py-1 text-nowrap';
             btn.style.fontSize = '0.75rem';
@@ -520,6 +505,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         render7DayForecast(data);
         renderChart(data);
+        renderCCTVSelector(currentPlaceName, currentLat, currentLng); // อัปเดตกล้องตามจังหวัดที่เลือก
+        
         if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
 
         WeatherService.fetchAirQuality(currentLat, currentLng).then(pmVal => {
