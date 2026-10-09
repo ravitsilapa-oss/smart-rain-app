@@ -232,10 +232,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let deferredPrompt = null;
 
     // Dark Mode Toggle
-    document.getElementById('btnToggleDark').onclick = () => {
-        document.body.classList.toggle('bg-dark');
-        document.body.classList.toggle('text-white');
-    };
+    const btnDark = document.getElementById('btnToggleDark');
+    if (btnDark) {
+        btnDark.onclick = () => {
+            document.body.classList.toggle('bg-dark');
+            document.body.classList.toggle('text-white');
+        };
+    }
 
     // PWA Install Prompt Handler
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -298,17 +301,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btnScan').onclick = handleScan;
 
-    document.getElementById('btnPlayRadar').onclick = () => {
-        const btn = document.getElementById('btnPlayRadar');
-        if (isPlaying) {
-            RadarService.stopAnimation();
-            btn.innerText = "▶ เล่น";
-        } else {
-            RadarService.playAnimation(idx => document.getElementById('radarTimeline').value = idx);
-            btn.innerText = "⏸ หยุด";
-        }
-        isPlaying = !isPlaying;
-    };
+    const playBtn = document.getElementById('btnPlayRadar');
+    if (playBtn) {
+        playBtn.onclick = () => {
+            if (isPlaying) {
+                RadarService.stopAnimation();
+                playBtn.innerText = "▶ เล่น";
+            } else {
+                RadarService.playAnimation(idx => {
+                    const timeline = document.getElementById('radarTimeline');
+                    if (timeline) timeline.value = idx;
+                });
+                playBtn.innerText = "⏸ หยุด";
+            }
+            isPlaying = !isPlaying;
+        };
+    }
 
     document.getElementById('btnShareLine').onclick = () => {
         const temp = document.getElementById('valTemp').innerText;
@@ -367,7 +375,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             alertBox.classList.add('d-none');
         }
 
-        // AI Travel Advice (Traffic + Rain Warning)
         let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปปกติ `;
         if (risk.score > 60 || data.current.precipitation > 2) {
             aiMsg += `⚠️ กำลังมีฝนตกหนักในพื้นที่ เสี่ยงรถติดและน้ำท่วมขัง ควรหลีกเลี่ยงถนนสายหลักและใช้เส้นทางเลี่ยงเมือง `;
@@ -406,6 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function initProvinceDropdown() {
         const sel = document.getElementById('provinceSelect');
+        if (!sel) return;
         LocationService.provinces.forEach(p => sel.innerHTML += `<option value="${p.lat},${p.lng}">${p.name} (${p.region})</option>`);
         sel.onchange = e => {
             if (!e.target.value) return;
@@ -420,7 +428,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderChart(wData) {
-        const ctx = document.getElementById('forecastChart').getContext('2d');
+        const ctxElement = document.getElementById('forecastChart');
+        if (!ctxElement) return;
+        const ctx = ctxElement.getContext('2d');
         const labels = (wData.hourly?.time || []).slice(0, 6).map(t => t.split('T')[1]);
         const rain = (wData.hourly?.precipitation || []).slice(0, 6);
         if (chartInstance) chartInstance.destroy();
@@ -433,6 +443,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     refreshAllData();
     RadarService.loadRadarFrames().then(ts => {
-        if(ts.length > 0) document.getElementById('radarTimeline'].max = ts.length - 1;
+        const timeline = document.getElementById('radarTimeline');
+        if(ts.length > 0 && timeline) timeline.max = ts.length - 1;
     });
 });
