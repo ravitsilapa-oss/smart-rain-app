@@ -58,7 +58,7 @@ const LocationService = {
 const WeatherService = {
     async fetchWeather(lat, lng) {
         try {
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day&daily=sunrise,sunset,uv_index_max&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day,weather_code&daily=sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
             const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,european_aqi&timezone=Asia%2FBangkok`;
             
             const [wRes, aqRes] = await Promise.all([fetch(weatherUrl), fetch(aqUrl)]);
@@ -78,6 +78,7 @@ const RadarService = {
     intervalId: null,
     locationMarker: null,
     locationCircle: null,
+    currentOpacity: 0.6,
 
     initMap(id, lat, lng) {
         if (this.map) return;
@@ -91,6 +92,11 @@ const RadarService = {
         this.renderFloodHotspots();
         this.renderCCTVMarkers();
         this.updateLocationMarker(lat, lng, "ตำแหน่งปัจจุบัน");
+    },
+
+    setOpacity(opacity) {
+        this.currentOpacity = opacity;
+        this.radarLayers.forEach(l => l.setOpacity(opacity));
     },
 
     renderFloodHotspots() {
@@ -108,9 +114,9 @@ const RadarService = {
         LocationService.cctvCameras.forEach(cam => {
             const camIcon = L.divIcon({
                 className: 'custom-div-icon',
-                html: "<div style='background-color:#e6007e;color:white;padding:3px 6px;border-radius:12px;font-size:12px;box-shadow:0 2px 4px rgba(0,0,0,0.3);font-weight:bold;'>📷 กล้อง</div>",
-                iconSize: [55, 25],
-                iconAnchor: [27, 12]
+                html: "<div style='background-color:#e6007e;color:white;padding:3px 6px;border-radius:12px;font-size:11px;box-shadow:0 2px 4px rgba(0,0,0,0.3);font-weight:bold;'>📷 CCTV</div>",
+                iconSize: [60, 25],
+                iconAnchor: [30, 12]
             });
 
             L.marker([cam.lat, cam.lng], { icon: camIcon }).addTo(this.map)
@@ -128,8 +134,8 @@ const RadarService = {
             .openPopup();
 
         this.locationCircle = L.circle([lat, lng], {
-            color: '#ff0033',
-            fillColor: '#ff0033',
+            color: '#0d6efd',
+            fillColor: '#0d6efd',
             fillOpacity: 0.15,
             radius: 3000
         }).addTo(this.map);
@@ -150,7 +156,7 @@ const RadarService = {
             pastFrames.forEach(frame => {
                 const tileUrl = `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`;
                 const layer = L.tileLayer(tileUrl, { 
-                    opacity: 0.6, 
+                    opacity: this.currentOpacity, 
                     zIndex: 100,
                     maxNativeZoom: 8,
                     maxZoom: 18,
@@ -231,12 +237,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     let chartInstance = null, isPlaying = false, scannedDataStore = [];
     let deferredPrompt = null;
 
+    // Favorites System
+    let favorites = JSON.parse(localStorage.getItem('fav_locations') || '["กรุงเทพมหานคร", "เชียงใหม่", "ขอนแก่น"]');
+    renderFavorites();
+
+    function renderFavorites() {
+        const container = document.getElementById('favoriteChips');
+        if (!container) return;
+        container.innerHTML = '<span class="text-muted small me-1"><i class="fa-solid fa-star text-warning"></i> โปรด:</span>';
+        favorites.forEach(place => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-light border rounded-pill px-2 py-0 text-secondary me-1';
+            btn.style.fontSize = '0.75rem';
+            btn.innerHTML = `${place} <i class="fa-solid fa-xmark text-danger ms-1"></i>`;
+            btn.querySelector('.fa-xmark').onclick = (e) => {
+                e.stopPropagation();
+                favorites = favorites.filter(f => f !== place);
+                localStorage.setItem('fav_locations', JSON.stringify(favorites));
+                renderFavorites();
+            };
+            btn.onclick = async () => {
+                document.getElementById('searchInput').value = place;
+                const res = await LocationService.searchLocation(place);
+                if (res) {
+                    currentLat = res.lat; currentLng = res.lng; currentPlaceName = res.name;
+                    RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
+                    refreshAllData();
+                }
+            };
+            container.appendChild(btn);
+        });
+    }
+
+    document.getElementById('btnAddFavorite').onclick = () => {
+        if (!favorites.includes(currentPlaceName)) {
+            favorites.push(currentPlaceName);
+            localStorage.setItem('fav_locations', JSON.stringify(favorites));
+            renderFavorites();
+            alert(`บันทึก "${currentPlaceName}" ลงในรายการโปรดเรียบร้อย!`);
+        }
+    };
+
+    // Radar Opacity Slider
+    document.getElementById('radarOpacity').oninput = (e) => {
+        RadarService.setOpacity(parseFloat(e.target.value));
+    };
+
     // Dark Mode Toggle
     const btnDark = document.getElementById('btnToggleDark');
     if (btnDark) {
         btnDark.onclick = () => {
             document.body.classList.toggle('bg-dark');
             document.body.classList.toggle('text-white');
+            document.querySelectorAll('.card').forEach(c => c.classList.toggle('bg-secondary'));
+            document.querySelectorAll('.card').forEach(c => c.classList.toggle('text-white'));
         };
     }
 
@@ -247,7 +301,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const banner = document.getElementById('pwaInstallBanner');
         const btn = document.getElementById('btnInstallPWA');
         if (banner) banner.style.display = 'block';
-        
         if (btn) {
             btn.onclick = () => {
                 if (deferredPrompt) {
@@ -264,22 +317,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     RadarService.initMap('map', currentLat, currentLng);
     initProvinceDropdown();
 
-    document.getElementById('btnFetchLocation').onclick = () => {
-        currentLat = parseFloat(document.getElementById('latInput').value) || currentLat;
-        currentLng = parseFloat(document.getElementById('lngInput').value) || currentLng;
-        currentPlaceName = `พิกัด (${currentLat.toFixed(2)}, ${currentLng.toFixed(2)})`;
-        RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
-        refreshAllData();
-    };
-
     document.getElementById('btnGPS').onclick = async () => {
         try {
             document.getElementById('refreshStatusText').innerText = "กำลังดึง GPS...";
             const pos = await LocationService.getCurrentGPS();
             currentLat = pos.lat; currentLng = pos.lng;
-            currentPlaceName = "ตำแหน่งปัจจุบัน";
-            document.getElementById('latInput').value = currentLat;
-            document.getElementById('lngInput').value = currentLng;
+            currentPlaceName = "ตำแหน่งปัจจุบันของฉัน";
             RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
             refreshAllData();
         } catch (e) { alert("GPS ไม่พร้อมใช้งาน: " + e.message); }
@@ -292,8 +335,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const res = await LocationService.searchLocation(q);
         if (res) {
             currentLat = res.lat; currentLng = res.lng; currentPlaceName = res.name;
-            document.getElementById('latInput').value = currentLat;
-            document.getElementById('lngInput').value = currentLng;
             RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
             refreshAllData();
         } else { alert("ไม่พบสถานที่"); }
@@ -306,13 +347,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         playBtn.onclick = () => {
             if (isPlaying) {
                 RadarService.stopAnimation();
-                playBtn.innerText = "▶ เล่น";
+                playBtn.innerHTML = '<i class="fa-solid fa-play"></i> เล่น';
             } else {
                 RadarService.playAnimation(idx => {
                     const timeline = document.getElementById('radarTimeline');
                     if (timeline) timeline.value = idx;
                 });
-                playBtn.innerText = "⏸ หยุด";
+                playBtn.innerHTML = '<i class="fa-solid fa-pause"></i> หยุด';
             }
             isPlaying = !isPlaying;
         };
@@ -321,16 +362,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnShareLine').onclick = () => {
         const temp = document.getElementById('valTemp').innerText;
         const rain = document.getElementById('valRain').innerText;
-        const pm25 = document.getElementById('valPM25').innerText;
-        const msg = `🌧️ รายงานสภาพอากาศ & PM2.5: ${currentPlaceName}\n🌡️ อุณหภูมิ: ${temp}\n🌧️ ฝนตก: ${rain}\n😷 PM2.5: ${pm25}\n⏰ เวลา: ${new Date().toLocaleTimeString('th-TH')} น.`;
+        const pm25 = document.getElementById('valPM25Badge').innerText;
+        const msg = `🌧️ รายงานสภาพอากาศ & จราจร: ${currentPlaceName}\n🌡️ อุณหภูมิ: ${temp}\n🌧️ ฝนตก: ${rain}\n😷 ${pm25}\n⏰ เวลา: ${new Date().toLocaleTimeString('th-TH')} น.`;
         window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank');
-    };
-
-    document.getElementById('btnExportCSV').onclick = () => {
-        if (scannedDataStore.length === 0) return alert("กรุณากดสแกนพื้นที่ก่อน");
-        let csv = "data:text/csv;charset=utf-8,\uFEFFพื้นที่,คะแนนเสี่ยง,ระดับ,ฝนปัจจุบัน,PM2.5\n";
-        scannedDataStore.forEach(i => csv += `"${i.name}",${i.score},"${i.level}",${i.rainPast},${i.pm25}\n`);
-        const a = document.createElement('a'); a.href = encodeURI(csv); a.download = 'weather_risk_report.csv'; a.click();
     };
 
     async function refreshAllData() {
@@ -341,24 +375,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        document.getElementById('currentPlaceBadge').innerText = currentPlaceName;
         const tempCurr = data.current.temperature_2m;
         const tempApp = data.current.apparent_temperature;
-        document.getElementById('valTemp').innerText = `${tempCurr} °C (${tempApp} °C)`;
-        document.getElementById('valHumidity').innerText = `${data.current.relative_humidity_2m} %`;
+        document.getElementById('valTemp').innerText = `${tempCurr}°C`;
+        document.getElementById('valApparentTemp').innerText = `รู้สึกเหมือน: ${tempApp}°C`;
+        document.getElementById('valHumidity').innerText = `${data.current.relative_humidity_2m}%`;
         document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
-        document.getElementById('valWindSpeed').innerText = `${data.current.wind_speed_10m} กม./ชม.`;
         
         const visKm = data.current.visibility ? (data.current.visibility / 1000).toFixed(1) : "N/A";
         document.getElementById('valVisibility').innerText = `${visKm} กม.`;
 
         const pmVal = data.air_quality?.pm2_5 ? data.air_quality.pm2_5.toFixed(1) : "N/A";
-        document.getElementById('valPM25').innerText = `${pmVal} µg/m³`;
+        document.getElementById('valPM25Badge').innerText = `PM2.5: ${pmVal} µg/m³`;
 
-        if (data.daily?.sunrise?.[0]) {
-            const sr = data.daily.sunrise[0].split('T')[1];
-            const ss = data.daily.sunset[0].split('T')[1];
-            document.getElementById('valSun').innerText = `${sr} / ${ss}`;
-        }
+        // Weather Code text
+        let desc = "อากาศปกติ";
+        if (data.current.precipitation > 0) desc = "มีฝนตก";
+        else if (data.current.relative_humidity_2m > 85) desc = "เมฆมาก ชื้นสูง";
+        document.getElementById('valWeatherDesc').innerText = desc;
 
         const risk = RiskEngine.calculateRisk(data);
         const alertBox = document.getElementById('alertBox');
@@ -368,7 +403,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('alertMessage').innerText = risk.floodRisk ? 
                 `เสี่ยงน้ำท่วมขังในพื้นที่ ${currentPlaceName}! ปริมาณฝนสะสมสูง` : 
                 `เฝ้าระวังฝนตกหนัก (${risk.score} คะแนน) ในพื้นที่ ${currentPlaceName}`;
-            
             playSirenSound();
             if ("vibrate" in navigator) navigator.vibrate([300, 100, 300, 100, 400]);
         } else {
@@ -377,20 +411,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         let aiMsg = `พื้นที่ ${currentPlaceName}: สภาพอากาศทั่วไปปกติ `;
         if (risk.score > 60 || data.current.precipitation > 2) {
-            aiMsg += `⚠️ กำลังมีฝนตกหนักในพื้นที่ เสี่ยงรถติดและน้ำท่วมขัง ควรหลีกเลี่ยงถนนสายหลักและใช้เส้นทางเลี่ยงเมือง `;
+            aiMsg += `⚠️ กำลังมีฝนตกหนัก เสี่ยงรถติดและน้ำท่วมขัง แนะนำเลี่ยงถนนสายหลัก `;
         }
-        if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 ค่า PM2.5 สูง ควรสวมหน้ากากอนามัย `;
-        if (data.current.visibility < 3000) aiMsg += ` 🚗 ทัศนวิสัยต่ำเนื่องจากฝน/หมอก เปิดไฟหน้ารถด้วยความระมัดระวัง`;
-        
+        if (data.air_quality?.pm2_5 > 37.5) aiMsg += `😷 PM2.5 สูง ควรสวมหน้ากากอนามัย `;
+        if (data.current.visibility < 3000) aiMsg += ` 🚗 ทัศนวิสัยต่ำ เปิดไฟหน้ารถด้วยความระมัดระวัง`;
         document.getElementById('aiAnalysisResult').innerText = aiMsg;
 
+        render7DayForecast(data);
         renderChart(data);
         document.getElementById('refreshStatusText').innerText = `อัปเดตแล้ว: ${new Date().toLocaleTimeString('th-TH')}`;
     }
 
+    function render7DayForecast(data) {
+        const list = document.getElementById('forecast7DaysList');
+        if (!list || !data.daily) return;
+        list.innerHTML = '';
+        const days = data.daily.time || [];
+        const maxTemps = data.daily.temperature_2m_max || [];
+        const minTemps = data.daily.temperature_2m_min || [];
+        const probs = data.daily.precipitation_probability_max || [];
+
+        days.forEach((dStr, i) => {
+            const dateObj = new Date(dStr);
+            const dayName = dateObj.toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short' });
+            const maxT = maxTemps[i] || '--';
+            const minT = minTemps[i] || '--';
+            const rainProb = probs[i] || 0;
+
+            list.innerHTML += `
+                <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center px-0 py-2 border-bottom">
+                    <div class="fw-bold">${dayName}</div>
+                    <div class="text-muted small"><i class="fa-solid fa-cloud-rain text-primary"></i> ${rainProb}%</div>
+                    <div><span class="text-danger fw-bold">${maxT}°</span> <span class="text-muted">/ ${minT}°C</span></div>
+                </div>`;
+        });
+    }
+
     async function handleScan() {
         const list = document.getElementById('provinceRiskList');
-        list.innerHTML = `<div class="text-center p-3 text-muted">กำลังสแกนสภาพอากาศทั่วประเทศ...</div>`;
+        list.innerHTML = `<div class="text-center p-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> กำลังสแกนสภาพอากาศทั่วประเทศ...</div>`;
         scannedDataStore = [];
         
         for (const prov of LocationService.provinces) {
@@ -403,10 +462,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         list.innerHTML = '';
         scannedDataStore.forEach(item => {
-            list.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center py-2">
+            list.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center py-2 bg-transparent">
                 <div><b>${item.name}</b> <small class="text-muted">(${item.region})</small>
-                <div class="small text-secondary">ฝน: ${item.rainPast} มม. | PM2.5: ${item.pm25}</div></div>
-                <span class="badge ${item.badgeClass} p-2">${item.score} ${item.level}</span>
+                <div class="small text-secondary" style="font-size:0.75rem;">ฝน: ${item.rainPast} มม. | PM2.5: ${item.pm25}</div></div>
+                <span class="badge ${item.badgeClass} p-2 rounded-pill">${item.score} ${item.level}</span>
             </div>`;
         });
     }
@@ -420,8 +479,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const [lat, lng] = e.target.value.split(',').map(Number);
             currentLat = lat; currentLng = lng;
             currentPlaceName = e.target.options[e.target.selectedIndex].text.split(' ')[0];
-            document.getElementById('latInput').value = currentLat;
-            document.getElementById('lngInput').value = currentLng;
             RadarService.updateLocationMarker(currentLat, currentLng, currentPlaceName);
             refreshAllData();
         };
@@ -436,7 +493,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'line',
-            data: { labels, datasets: [{ label: 'ปริมาณฝน (มม.)', data: rain, borderColor: '#0d6efd', fill: true }] },
+            data: { 
+                labels, 
+                datasets: [{ 
+                    label: 'ปริมาณฝน (มม.)', 
+                    data: rain, 
+                    borderColor: '#0d6efd', 
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }] 
+            },
             options: { responsive: true, scales: { y: { beginAtZero: true } } }
         });
     }
