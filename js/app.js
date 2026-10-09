@@ -63,22 +63,23 @@ const LocationService = {
 const WeatherService = {
     async fetchWeather(lat, lng) {
         try {
-            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day,weather_code&daily=sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&hourly=precipitation_probability,precipitation&past_hours=2&forecast_hours=6&timezone=Asia%2FBangkok`;
-            const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5,european_aqi&timezone=Asia%2FBangkok`;
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_direction_10m,visibility,is_day,weather_code&daily=sunrise,sunset,uv_index_max,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&hourly=precipitation_probability,precipitation&timezone=Asia%2FBangkok`;
             
-            const [wRes, aqRes] = await Promise.all([fetch(weatherUrl), fetch(aqUrl)]);
-            const wData = await wRes.json();
-            const aqData = await aqRes.json();
-
-            return { ...wData, air_quality: aqData?.current || { pm2_5: 0 }, fallback: false };
+            const res = await fetch(weatherUrl);
+            const wData = await res.json();
+            return wData;
         } catch (e) {
-            return {
-                current: { temperature_2m: 28.5, apparent_temperature: 32.0, relative_humidity_2m: 85, precipitation: 12.5, wind_speed_10m: 15, visibility: 5000 },
-                hourly: { precipitation: [5, 10, 25, 40, 15, 5], time: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
-                daily: { temperature_2m_max: [33], temperature_2m_min: [25], precipitation_probability_max: [80], time: [new Date().toISOString()] },
-                air_quality: { pm2_5: 28.4 },
-                fallback: true
-            };
+            return null;
+        }
+    },
+    async fetchAirQuality(lat, lng) {
+        try {
+            const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=pm2_5&timezone=Asia%2FBangkok`;
+            const res = await fetch(aqUrl);
+            const data = await res.json();
+            return data?.current?.pm2_5 || 25.0;
+        } catch (e) {
+            return 25.0;
         }
     }
 };
@@ -395,44 +396,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function refreshAllData() {
         const statusText = document.getElementById('refreshStatusText');
-        if (statusText) statusText.innerText = "กำลังดึงข้อมูล 4 มิติ...";
+        if (statusText) statusText.innerText = "กำลังซิงค์ข้อมูล...";
         
+        // Load weather instantly
         const data = await WeatherService.fetchWeather(currentLat, currentLng);
         if (!data || !data.current) {
             if (statusText) statusText.innerText = "ดึงข้อมูลล้มเหลว";
             return;
         }
 
-        const placeBadge = document.getElementById('currentPlaceBadge');
-        if (placeBadge) placeBadge.innerText = currentPlaceName;
-
-        const valTemp = document.getElementById('valTemp');
-        if (valTemp) valTemp.innerText = `${data.current.temperature_2m}°C`;
-
-        const valApp = document.getElementById('valApparentTemp');
-        if (valApp) valApp.innerText = `รู้สึกเหมือน: ${data.current.apparent_temperature}°C`;
-
-        const valHum = document.getElementById('valHumidity');
-        if (valHum) valHum.innerText = `${data.current.relative_humidity_2m}%`;
-
-        const valRain = document.getElementById('valRain');
-        if (valRain) valRain.innerText = `${data.current.precipitation} มม.`;
+        document.getElementById('currentPlaceBadge').innerText = currentPlaceName;
+        document.getElementById('valTemp').innerText = `${data.current.temperature_2m}°C`;
+        document.getElementById('valApparentTemp').innerText = `รู้สึกเหมือน: ${data.current.apparent_temperature}°C`;
+        document.getElementById('valHumidity').innerText = `${data.current.relative_humidity_2m}%`;
+        document.getElementById('valRain').innerText = `${data.current.precipitation} มม.`;
         
         const visKm = data.current.visibility ? (data.current.visibility / 1000).toFixed(1) : "N/A";
-        const valVis = document.getElementById('valVisibility');
-        if (valVis) valVis.innerText = `${visKm} กม.`;
+        document.getElementById('valVisibility').innerText = `${visKm} กม.`;
 
-        const valPm = document.getElementById('valPM25Badge');
-        if (valPm) valPm.innerText = `PM2.5: ${data.air_quality?.pm2_5 || 0} µg/m³`;
-
+        // Render charts & forecasts immediately
         const risk = RiskEngine.calculateRisk(data);
         const alertBox = document.getElementById('alertBox');
         
         if (risk.score > 75 || risk.floodRisk) {
             if (alertBox) {
                 alertBox.classList.remove('d-none');
-                const alertMsg = document.getElementById('alertMessage');
-                if (alertMsg) alertMsg.innerText = `วิกฤต! ปริมาณฝนสะสมสูงในพื้นที่ ${currentPlaceName} (${risk.score} คะแนน)`;
+                document.getElementById('alertMessage').innerText = `วิกฤต! ปริมาณฝนสะสมสูงในพื้นที่ ${currentPlaceName} (${risk.score} คะแนน)`;
             }
         } else {
             if (alertBox) alertBox.classList.add('d-none');
@@ -441,13 +430,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         let aiMsg = `พื้นที่ ${currentPlaceName}: ระบบประมวลผล 4 มิติสมบูรณ์ `;
         if (risk.score > 75) aiMsg += `🚨 แจ้งเตือนภัยระดับวิกฤต ฝนตกหนักสะสม น้ำใกล้ล้นตลิ่ง แนะนำเลี่ยงเส้นทางทันที `;
         else aiMsg += `✅ สภาพอากาศและระดับน้ำอยู่ในเกณฑ์ปลอดภัย จราจรคล่องตัว`;
-        
-        const aiResult = document.getElementById('aiAnalysisResult');
-        if (aiResult) aiResult.innerText = aiMsg;
+        document.getElementById('aiAnalysisResult').innerText = aiMsg;
 
         render7DayForecast(data);
         renderChart(data);
-        if (statusText) statusText.innerText = data.fallback ? "โหมดสำรอง (Fallback Active)" : `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
+        if (statusText) statusText.innerText = `อัปเดตเรียลไทม์: ${new Date().toLocaleTimeString('th-TH')}`;
+
+        // Fetch Air Quality asynchronously in background
+        WeatherService.fetchAirQuality(currentLat, currentLng).then(pmVal => {
+            const pmBadge = document.getElementById('valPM25Badge');
+            if (pmBadge) pmBadge.innerText = `PM2.5: ${pmVal.toFixed(1)} µg/m³`;
+        });
     }
 
     function render7DayForecast(data) {
